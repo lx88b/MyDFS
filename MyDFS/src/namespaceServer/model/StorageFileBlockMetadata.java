@@ -1,4 +1,4 @@
-package namespaceServer;
+package namespaceServer.model;
 
 import java.util.ArrayList;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package namespaceServer;
+package namespaceServer.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +11,7 @@ public class NamespaceServer {
 	HashMap<Integer,StorageNode> nodeList = new HashMap<Integer,StorageNode>();
 	//文件名：文件对象
 	HashMap<String,StorageFileMetadata> fileMetadataList = new HashMap<String,StorageFileMetadata>();
+	//目录名:<类型：目录文件对象>
 	private Object sysNodeObject = new Object();
 	private Object sysfileObject = new Object();
 	private static NamespaceServer ns = null;
