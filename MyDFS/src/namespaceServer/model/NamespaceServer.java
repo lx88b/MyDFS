@@ -1,6 +1,7 @@
 package namespaceServer.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,8 +14,6 @@ public class NamespaceServer {
 	HashMap<String,StorageFileMetadata> fileMetadataList = new HashMap<String,StorageFileMetadata>();
 	//目录
 	StorageDir root = new StorageDir("root");
-	private Object sysNodeObject = new Object();
-	private Object sysfileObject = new Object();
 	private static NamespaceServer ns = null;
 	public static NamespaceServer getNamespaceServer() {
 		if(ns==null)
@@ -23,13 +22,15 @@ public class NamespaceServer {
 	}
 	
 	/**
-	 * 
+	 * 添加一个文件
+	 * @param path
 	 * @param fileName
 	 * @param blockSize
 	 * @return 当前块的id以及被放置的节点集合
 	 */
 	public synchronized HashMap<UUID,ArrayList<Integer>> addFile(String path, String fileName, int blockSize) {
-		if(this.fileMetadataList.containsKey(fileName))
+		String fullFileName = path+fileName;
+		if(this.fileMetadataList.containsKey(fullFileName))
 			return null;
 		if(nodeList.isEmpty())
 			return null;
@@ -50,7 +51,7 @@ public class NamespaceServer {
 		StorageNode node1 = nodes.get(0);
 		//创建新文件和新块
 		StorageFileMetadata newFile = new StorageFileMetadata();
-		StorageFileBlockMetadata newBlock = new StorageFileBlockMetadata();
+		StorageFileBlockMetadata newBlock = new StorageFileBlockMetadata(fullFileName);
 		//给该新块添加第一个存储节点的信息
 		newBlock.addNodePort(node1.getPort());
 		newBlock.setBlockID(blockID);
@@ -63,8 +64,9 @@ public class NamespaceServer {
 		//给新文件添加块和文件名
 		newFile.addBlock(blockID, newBlock);
 		newFile.setFileName(fileName);
+		newFile.setFullFileName(fullFileName);
 		//添加新文件信息
-		this.fileMetadataList.put(fileName, newFile);
+		this.fileMetadataList.put(fullFileName, newFile);
 		//在最小节点中添加该块并更新节点信息
 		node1.addBlock(blockID, newBlock);
 		this.nodeList.put(node1.getPort(), node1);
@@ -77,18 +79,22 @@ public class NamespaceServer {
 			tempNodes.add(node2.getPort());
 		}
 		temp.put(blockID, tempNodes);
+		//在目录记录中添加该文件,用文件的纯名称
+		root.addFile(this.getPathsByString(path), fileName);
 		return temp;
 	}
 
 	/**
-	 * 
+	 * 获取该文件
+	 * @param path
 	 * @param fileName
 	 * @return 该文件的所有块编号以及对应的节点编号
 	 */
-	public synchronized HashMap<UUID,ArrayList<Integer>> getFile(String fileName) {
-		if(!fileMetadataList.containsKey(fileName))
+	public synchronized HashMap<UUID,ArrayList<Integer>> getFile(String path, String fileName) {
+		String fullFileName = path+fileName;
+		if(!fileMetadataList.containsKey(fullFileName))
 			return null;
-		StorageFileMetadata sfm = this.fileMetadataList.get(fileName);
+		StorageFileMetadata sfm = this.fileMetadataList.get(fullFileName);
 		HashMap<UUID,StorageFileBlockMetadata> blocks = sfm.getBlocks();
 		ArrayList<StorageFileBlockMetadata> bs = (ArrayList<StorageFileBlockMetadata>) blocks.values();
 		HashMap<UUID,ArrayList<Integer>> temp = new HashMap<UUID,ArrayList<Integer>>();
@@ -101,14 +107,20 @@ public class NamespaceServer {
 	}
 
 	/**
-	 * 
+	 * 删除该文件
+	 * @param path
 	 * @param fileName
 	 * @return 被删除的文件的所有块号以及所在节点
 	 */
-	public synchronized HashMap<UUID,ArrayList<Integer>> deleteFile(String fileName) {
-		if(!fileMetadataList.containsKey(fileName))
+	public synchronized HashMap<UUID,ArrayList<Integer>> deleteFile(String path, String fileName) {
+		return myDeleteFile(path, fileName);
+	}
+	
+	private HashMap<UUID,ArrayList<Integer>> myDeleteFile(String path, String fileName) {
+		String fullFileName = path+fileName;
+		if(!fileMetadataList.containsKey(fullFileName))
 			return null;
-		StorageFileMetadata sfm = this.fileMetadataList.get(fileName);
+		StorageFileMetadata sfm = this.fileMetadataList.get(fullFileName);
 		HashMap<UUID,StorageFileBlockMetadata> blocks = sfm.getBlocks();
 		//获取了该文件的所有block元数据
 		ArrayList<StorageFileBlockMetadata> bs = (ArrayList<StorageFileBlockMetadata>) blocks.values();
@@ -130,35 +142,62 @@ public class NamespaceServer {
 			}
 		}
 		//删除该文件的元数据
-		this.fileMetadataList.remove(fileName);
+		this.fileMetadataList.remove(fullFileName);
+		root.deleteFile(this.getPathsByString(path), fileName);
 		return temp;
 	}
 
-	public synchronized boolean existFile(String fileName) {
-		return this.fileMetadataList.containsKey(fileName);
+	public synchronized boolean existFile(String path, String fileName) {
+		String fullFileName = path+fileName;
+		return this.fileMetadataList.containsKey(fullFileName);
 	}
 
-	public synchronized int sizeFile(String fileName) {
-		StorageFileMetadata tempFile = this.fileMetadataList.get(fileName);
+	public synchronized int sizeFile(String path, String fileName) {
+		String fullFileName = path+fileName;
+		StorageFileMetadata tempFile = this.fileMetadataList.get(fullFileName);
 		if(tempFile==null)
 			return 0;
 		return tempFile.getFileSize();
 	}
 
-	public void mkdir() {
-
+	public synchronized void mkdir(String path, String dir) {
+		root.addNewDir(this.getPathsByString(path), new StorageDir(dir));
 	}
 
-	public void delDir() {
-
+	public synchronized void delDir(String path, String dir) {
+		myDelDir(path,dir);
+	}
+	private void myDelDir(String path, String dir) {
+		ArrayList<String> paths = this.getPathsByString(path);
+		//获得要被删除的目录对象
+		StorageDir deletedDir = root.getDir(paths, dir);
+		//获得目录中的所有内容
+		HashMap<String,ArrayList<String>> allContent = deletedDir.list(paths, dir);
+		//获得当前目录的路径
+		path = path+dir+"/";
+		//获得当前目录的所有文件
+		ArrayList<String> files = allContent.get("file");
+		//删除这些文件
+		for(String fileName:files) {
+			this.myDeleteFile(path, fileName);
+		}
+		//获取当前目录的所有子目录
+		ArrayList<String> dirs = allContent.get("dir");
+		//删除这些子目录
+		for(String dirName:dirs) {
+			this.myDelDir(path, dirName);
+		}
+		//删除该目录
+		root.deleteDir(paths, dir);
 	}
 
-	public void list() {
-
+	public HashMap<String,ArrayList<String>> list(String path, String dir) {
+		return root.list(this.getPathsByString(path), dir);
 	}
 
-	public synchronized HashMap<UUID,ArrayList<Integer>> append(String fileName,int blockSize) {
-		if(!this.fileMetadataList.containsKey(fileName))
+	public synchronized HashMap<UUID,ArrayList<Integer>> append(String path, String fileName,int blockSize) {
+		String fullFileName = path+fileName;
+		if(!this.fileMetadataList.containsKey(fullFileName))
 			return null;
 		if(nodeList.isEmpty())
 			return null;
@@ -177,9 +216,9 @@ public class NamespaceServer {
 		});
 		//获得最小的节点，
 		StorageNode node1 = nodes.get(0);
-		//创建新文件和新块
-		StorageFileMetadata newFile = this.fileMetadataList.get(fileName);
-		StorageFileBlockMetadata newBlock = new StorageFileBlockMetadata();
+		//获得文件和创建新块
+		StorageFileMetadata newFile = this.fileMetadataList.get(fullFileName);
+		StorageFileBlockMetadata newBlock = new StorageFileBlockMetadata(fullFileName);
 		//给该新块添加第一个存储节点的信息
 		newBlock.addNodePort(node1.getPort());
 		newBlock.setBlockID(blockID);
@@ -192,7 +231,7 @@ public class NamespaceServer {
 		//给新文件添加块
 		newFile.addBlock(blockID, newBlock);
 		//更新文件信息
-		this.fileMetadataList.put(fileName, newFile);
+		this.fileMetadataList.put(fullFileName, newFile);
 		//在最小节点中添加该块并更新节点信息
 		node1.addBlock(blockID, newBlock);
 		this.nodeList.put(node1.getPort(), node1);
@@ -206,5 +245,38 @@ public class NamespaceServer {
 		}
 		temp.put(blockID, tempNodes);
 		return temp;
+	}
+	
+	/**
+	 * 把路径拆解为目录数组，目录名不允许为root或者空
+	 * @param pathS
+	 * @return
+	 */
+	private ArrayList<String> getPathsByString(String pathS) {
+		String[] s = pathS.split("/");
+		ArrayList<String> paths = new ArrayList<String>();
+		int size = s.length;
+		for(int i=0;i<size;i++) {
+			if(!(s[i].equals("")||s[i].equals("root")))
+				paths.add(s[i]);
+		}
+		return paths;
+	}
+	
+	public synchronized void removeNode(int nodePort) {
+		StorageNode deletedNode = nodeList.get(nodePort);
+		//移除该节点
+		nodeList.remove(nodePort);
+		if(nodeList.size()<=1)
+			return;
+		//获得所有要移动的块
+		HashMap<UUID,StorageFileBlockMetadata> blocks = deletedNode.getBlocks();
+		//获得所有要移动的块id
+		ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocks.keySet());
+		
+	}
+	
+	public synchronized void addNode(int nodePort) {
+		//判断是不是第二个节点
 	}
 }

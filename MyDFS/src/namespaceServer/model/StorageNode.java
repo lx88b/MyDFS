@@ -30,4 +30,8 @@ public class StorageNode {
 			nodeSize -= block.getBlockSize();
 		blocks.remove(blockID);
 	}
+	
+	public HashMap<UUID,StorageFileBlockMetadata> getBlocks() {
+		return this.blocks;
+	}
 }

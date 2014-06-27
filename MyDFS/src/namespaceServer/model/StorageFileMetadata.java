@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public class StorageFileMetadata {
 	private String fileName=null;
+	private String fullFileName=null;
 	private int fileSize = 0;
 	private HashMap<UUID,StorageFileBlockMetadata> blocks = new HashMap<UUID,StorageFileBlockMetadata>();
 	public void setFileName(String name) {
@@ -26,5 +27,11 @@ public class StorageFileMetadata {
 	
 	public HashMap<UUID,StorageFileBlockMetadata> getBlocks() {
 		return blocks;
+	}
+	public void setFullFileName(String name) {
+		fullFileName = name;
+	}
+	public String getFulFileName() {
+		return this.fullFileName;
 	}
 }
