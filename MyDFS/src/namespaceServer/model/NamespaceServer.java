@@ -11,7 +11,8 @@ public class NamespaceServer {
 	HashMap<Integer,StorageNode> nodeList = new HashMap<Integer,StorageNode>();
 	//文件名：文件对象
 	HashMap<String,StorageFileMetadata> fileMetadataList = new HashMap<String,StorageFileMetadata>();
-	//目录名:<类型：目录文件对象>
+	//目录
+	StorageDir root = new StorageDir("root");
 	private Object sysNodeObject = new Object();
 	private Object sysfileObject = new Object();
 	private static NamespaceServer ns = null;
@@ -27,7 +28,7 @@ public class NamespaceServer {
 	 * @param blockSize
 	 * @return 当前块的id以及被放置的节点集合
 	 */
-	public synchronized HashMap<UUID,ArrayList<Integer>> addFile(String fileName, int blockSize) {
+	public synchronized HashMap<UUID,ArrayList<Integer>> addFile(String path, String fileName, int blockSize) {
 		if(this.fileMetadataList.containsKey(fileName))
 			return null;
 		if(nodeList.isEmpty())
