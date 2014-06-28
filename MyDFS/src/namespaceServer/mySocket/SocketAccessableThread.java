@@ -11,6 +11,11 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
+
+import namespaceServer.model.NamespaceServer;
 
 public class SocketAccessableThread extends Thread {
 	
@@ -50,31 +55,116 @@ public class SocketAccessableThread extends Thread {
 		                //根据该请求处理
 //		                System.out.println("Client Socket Message:"+str);  
 		                else if(str.equals("Add")){
-		                	this.addFile();
+		                	String path = br.readLine();
+		                	String fileName = br.readLine();
+		                	int blockSize = Integer.parseInt(br.readLine());
+		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = NamespaceServer.getNamespaceServer().addFile(path, fileName, blockSize);
+		                	ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
+		                	//每个uuid返回一行，uuid及端口用:分割
+		                	for(UUID blockID:blockIDs) {
+		                		ArrayList<Integer> ports = blocksAndPorts.get(blockID);
+		                		String out = blockID.toString();
+		                		for(int port:ports){
+		                			out = out+":"+String.valueOf(port);
+		                		}
+		                		pw.println(out);
+		                	}
 		                }
 		                else if(str.equals("Get")){
-		                	this.getFile();
+		                	String path = br.readLine();
+		                	String fileName = br.readLine();
+		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = NamespaceServer.getNamespaceServer().getFile(path, fileName);
+		                	ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
+		                	//每个uuid返回一行，uuid及端口用:分割
+		                	for(UUID blockID:blockIDs) {
+		                		ArrayList<Integer> ports = blocksAndPorts.get(blockID);
+		                		String out = blockID.toString();
+		                		for(int port:ports){
+		                			out = out+":"+String.valueOf(port);
+		                		}
+		                		pw.println(out);
+		                	}
 		                }
 		                else if(str.equals("Del")){
-		                	this.deleteFile();
+		                	String path = br.readLine();
+		                	String fileName = br.readLine();
+		                	HashMap<Integer,ArrayList<UUID>> portsAndBlocks = NamespaceServer.getNamespaceServer().deleteFile(path, fileName);
+		                	if(portsAndBlocks==null) {
+		                		pw.println("file is not exists");
+		                	}
+		                	else {
+		                		SocketServer.getSocketServer().deleteRequest(portsAndBlocks);
+		                		pw.println("success!");
+		                	}
 		                }
 		                else if(str.equals("Exist")){
-		                	this.existFile();
+		                	String path = br.readLine();
+		                	String fileName = br.readLine();
+		                	boolean ans = NamespaceServer.getNamespaceServer().existFile(path, fileName);
+		                	pw.println(ans);
 		                }
 		                else if(str.equals("Size")){
-		                	this.sizeFile();
+		                	String path = br.readLine();
+		                	String fileName = br.readLine();
+		                	int size = NamespaceServer.getNamespaceServer().sizeFile(path, fileName);
+		                	pw.println(size);
 		                }
 		                else if(str.equals("Mkdir")){
-		                	this.mkdir();
+		                	String path = br.readLine();
+		                	String dirName = br.readLine();
+		                	NamespaceServer.getNamespaceServer().mkdir(path, dirName);
+		                	pw.println("finish");
 		                }
 		                else if(str.equals("Deldir")){
-		                	this.delDir();
+		                	String path = br.readLine();
+		                	String dir = br.readLine();
+		                	HashMap<Integer,ArrayList<UUID>> portsAndBlocks = NamespaceServer.getNamespaceServer().delDir(path, dir);
+		                	if(portsAndBlocks==null) {
+		                		pw.println("file or dir is not exists");
+		                	}
+		                	else {
+		                		SocketServer.getSocketServer().deleteRequest(portsAndBlocks);
+		                		pw.println("success!");
+		                	}
 		                }
 		                else if(str.equals("List")){
-		                	this.list();
+		                	String path = br.readLine();
+		                	String dir = br.readLine();
+		                	HashMap<String,ArrayList<String>> listMap = NamespaceServer.getNamespaceServer().list(path, dir);
+		                	String fileout="file";
+		                	//如果该目录下有文件输出格式为“file:filename1:filename2:...”
+		                	if(listMap.containsKey("file")&&(!listMap.get("file").isEmpty())) {
+		                		ArrayList<String> files = listMap.get("file");
+		                		for(String file:files) {
+		                			fileout=fileout+":"+file;
+		                		}
+		                		pw.println(fileout);
+		                	}
+		                	String dirout = "dir";
+		                	//如果该目录下有子目录输出格式为“dir:dirname1:dirname2:...”
+		                	if(listMap.containsKey("dir")&&(!listMap.get("dir").isEmpty())) {
+		                		ArrayList<String> dirs = listMap.get("dir");
+		                		for(String ldir:dirs) {
+		                			dirout=dirout+":"+ldir;
+		                		}
+		                		pw.println(dirout);
+		                	}
 		                }
 		                else if(str.equals("Append")){
-		                	this.append();
+		                	String path = br.readLine();
+		                	String fileName = br.readLine();
+		                	int blockSize = Integer.parseInt(br.readLine());
+		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = NamespaceServer.getNamespaceServer().append(path, fileName, blockSize);
+		                	ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
+		                	//每个uuid返回一行，uuid及端口用:分割
+		                	for(UUID blockID:blockIDs) {
+		                		ArrayList<Integer> ports = blocksAndPorts.get(blockID);
+		                		String out = blockID.toString();
+		                		for(int port:ports){
+		                			out = out+":"+String.valueOf(port);
+		                		}
+		                		pw.println(out);
+		                	}
 		                }
 		                else{}
 		                pw.println("Message Received");  
@@ -103,42 +193,6 @@ public class SocketAccessableThread extends Thread {
 				e.printStackTrace();
 			}
 		}
-	}
-	
-	private void addFile() {
-		
-	}
-	
-	private void getFile() {
-		
-	}
-	
-	private void deleteFile() {
-		
-	}
-	
-	private void existFile() {
-		
-	}
-	
-	private void sizeFile() {
-		
-	}
-	
-	private void mkdir() {
-		
-	}
-	
-	private void delDir() {
-		
-	}
-	
-	private void list() {
-		
-	}
-	
-	private void append() {
-		
 	}
 
 }

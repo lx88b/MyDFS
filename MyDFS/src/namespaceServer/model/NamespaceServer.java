@@ -110,13 +110,13 @@ public class NamespaceServer {
 	 * 删除该文件
 	 * @param path
 	 * @param fileName
-	 * @return 被删除的文件的所有块号以及所在节点
+	 * @return 节点及其所要删除的块号
 	 */
-	public synchronized HashMap<UUID,ArrayList<Integer>> deleteFile(String path, String fileName) {
+	public synchronized HashMap<Integer,ArrayList<UUID>> deleteFile(String path, String fileName) {
 		return myDeleteFile(path, fileName);
 	}
 	
-	private HashMap<UUID,ArrayList<Integer>> myDeleteFile(String path, String fileName) {
+	private HashMap<Integer,ArrayList<UUID>> myDeleteFile(String path, String fileName) {
 		String fullFileName = path+fileName;
 		if(!fileMetadataList.containsKey(fullFileName))
 			return null;
@@ -124,7 +124,7 @@ public class NamespaceServer {
 		HashMap<UUID,StorageFileBlockMetadata> blocks = sfm.getBlocks();
 		//获取了该文件的所有block元数据
 		ArrayList<StorageFileBlockMetadata> bs = (ArrayList<StorageFileBlockMetadata>) blocks.values();
-		HashMap<UUID,ArrayList<Integer>> temp = new HashMap<UUID,ArrayList<Integer>>();
+		HashMap<Integer,ArrayList<UUID>> temp = new HashMap<Integer,ArrayList<UUID>>();
 		int size = bs.size();
 		for(int i=0; i<size;i++){
 			StorageFileBlockMetadata tempBlock = bs.get(i);
@@ -132,10 +132,17 @@ public class NamespaceServer {
 			UUID blockID = tempBlock.getBlockID();
 			//该block所在的存储节点的端口
 			ArrayList<Integer> tempNodePorts = tempBlock.getNodePort();
-			//记录被删除数据的块号及所在节点端口
-			temp.put(blockID, tempNodePorts);
-			//删除记录该块的所有节点的相关元数据
-			for(int tempPort : tempNodePorts){
+			for(int tempPort:tempNodePorts) {
+				//记录有删除需要的节点号及其上被删除的块号
+				if(temp.containsKey(tempPort)){
+					temp.get(tempPort).add(blockID);
+				}
+				else {
+					ArrayList<UUID> blockIDs = new ArrayList<UUID>();
+					blockIDs.add(blockID);
+					temp.put(tempPort, blockIDs);
+				}
+				//删除记录该块的所有节点的相关元数据
 				StorageNode tempNode = this.nodeList.get(tempPort);
 				tempNode.deleteBlock(blockID);
 				this.nodeList.put(tempPort, tempNode);
@@ -164,10 +171,12 @@ public class NamespaceServer {
 		root.addNewDir(this.getPathsByString(path), new StorageDir(dir));
 	}
 
-	public synchronized void delDir(String path, String dir) {
-		myDelDir(path,dir);
+	public synchronized HashMap<Integer,ArrayList<UUID>> delDir(String path, String dir) {
+		HashMap<Integer,ArrayList<UUID>> deleteNodeAndBlocks = new HashMap<Integer,ArrayList<UUID>>();
+		myDelDir(path,dir,deleteNodeAndBlocks);
+		return deleteNodeAndBlocks;
 	}
-	private void myDelDir(String path, String dir) {
+	private void myDelDir(String path, String dir,HashMap<Integer,ArrayList<UUID>> deleteNodeAndBlocks) {
 		ArrayList<String> paths = this.getPathsByString(path);
 		//获得要被删除的目录对象
 		StorageDir deletedDir = root.getDir(paths, dir);
@@ -179,13 +188,29 @@ public class NamespaceServer {
 		ArrayList<String> files = allContent.get("file");
 		//删除这些文件
 		for(String fileName:files) {
-			this.myDeleteFile(path, fileName);
+			HashMap<Integer,ArrayList<UUID>> tempHash = this.myDeleteFile(path, fileName);
+			//被删除的文件所在的节点集合
+			ArrayList<Integer> ports = new ArrayList<Integer>(tempHash.keySet());
+			for(int port:ports) {
+				//该节点上被删除的块集合
+				ArrayList<UUID> blocks = tempHash.get(port);
+				//已有该节点的记录，继续添加
+				if(deleteNodeAndBlocks.containsKey(port)) {
+					for(UUID blockID:blocks) {
+						deleteNodeAndBlocks.get(port).add(blockID);
+					}
+				}
+				//没有记录，新添加
+				else {
+					deleteNodeAndBlocks.put(port, blocks);
+				}
+			}
 		}
 		//获取当前目录的所有子目录
 		ArrayList<String> dirs = allContent.get("dir");
 		//删除这些子目录
 		for(String dirName:dirs) {
-			this.myDelDir(path, dirName);
+			this.myDelDir(path, dirName, deleteNodeAndBlocks);
 		}
 		//删除该目录
 		root.deleteDir(paths, dir);
@@ -231,7 +256,7 @@ public class NamespaceServer {
 		//给新文件添加块
 		newFile.addBlock(blockID, newBlock);
 		//更新文件信息
-		this.fileMetadataList.put(fullFileName, newFile);
+//		this.fileMetadataList.put(fullFileName, newFile);
 		//在最小节点中添加该块并更新节点信息
 		node1.addBlock(blockID, newBlock);
 		this.nodeList.put(node1.getPort(), node1);

@@ -29,7 +29,7 @@ public class ProcessAccessThread extends Thread {
 	public void run() {
 		try {
 			s = new ServerSocket(6001);
-			//服务器端始终等待接收请求，服务器端为6000接口
+			//服务器端始终等待接收请求，服务器端为6001接口
 			while(true){
 				socket = s.accept();
 				br = new BufferedReader(new InputStreamReader(socket.getInputStream()));  

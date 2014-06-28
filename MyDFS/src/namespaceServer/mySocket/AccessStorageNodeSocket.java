@@ -1,3 +1,6 @@
+/**
+ * ĞÄÌø¼à²âÌ×½Ó×Ö
+ */
 package namespaceServer.mySocket;
 
 import java.io.BufferedReader;
