@@ -1,11 +1,16 @@
 package namespaceServer.model;
 
+import java.security.KeyStore.Entry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+
+import javax.swing.SpringLayout.Constraints;
 
 public class NamespaceServer {
 	//节点端口：节点对象
@@ -302,6 +307,33 @@ public class NamespaceServer {
 	}
 	
 	public synchronized void addNode(int nodePort) {
+		//add the nodes first
+		StorageNode _new_node = null;
+		{
+			_new_node = new StorageNode();
+			_new_node.setPort(nodePort);
+			nodeList.put(nodePort, _new_node);
+		}
+		//第一个节点 以及 节点存在的情况
 		//判断是不是第二个节点
+		{
+			if(nodeList.size() == 2){
+				StorageNode _first_node = null;
+				for(Integer iI:nodeList.keySet()){
+					_first_node = nodeList.get(iI);
+				}
+				final HashMap<UUID, StorageFileBlockMetadata> blocks
+					= _first_node.getBlocks();
+				transerBlocks(_first_node, _new_node, blocks);
+			}
+		}
+	}
+	
+	private synchronized void transerBlocks(
+			StorageNode _from, StorageNode _to, 
+			final HashMap<UUID, StorageFileBlockMetadata> _blocks
+			)
+	{
+		
 	}
 }
