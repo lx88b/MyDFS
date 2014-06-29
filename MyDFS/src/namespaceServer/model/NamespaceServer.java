@@ -39,63 +39,26 @@ public class NamespaceServer {
 	 * 添加一个文件
 	 * @param path
 	 * @param fileName
-	 * @param blockSize
-	 * @return 当前块的id以及被放置的节点集合
+	 * @return 创建是否成功
 	 */
-	public synchronized HashMap<UUID,ArrayList<Integer>> addFile(String path, String fileName, int blockSize) {
+	public synchronized boolean addFile(String path, String fileName) {
 		String fullFileName = path+fileName;
 		if(this.fileMetadataList.containsKey(fullFileName))
-			return null;
+			return false;
 		if(nodeList.isEmpty())
-			return null;
-		HashMap<UUID,ArrayList<Integer>> temp = new HashMap<UUID,ArrayList<Integer>>();
-		ArrayList<Integer> tempNodes = new ArrayList<Integer>();
-		//生成该块编号
-		UUID blockID = UUID.randomUUID();
-		//获得所有存储节点并按存储数据大小排序
-		ArrayList<StorageNode> nodes = (ArrayList<StorageNode>)nodeList.values();
-		Collections.sort(nodes, new Comparator<StorageNode>(){
-			@Override
-			public int compare(StorageNode arg0, StorageNode arg1) {
-				// TODO Auto-generated method stub
-				return arg0.getNodeSize()-arg1.getNodeSize();
-			}
-		});
-		//获得最小的节点，
-		StorageNode node1 = nodes.get(0);
-		//创建新文件和新块
+			return false;
+		if(!root.testPath(this.getPathsByString(path)))
+			return false;
+		//创建新文件
 		StorageFileMetadata newFile = new StorageFileMetadata();
-		StorageFileBlockMetadata newBlock = new StorageFileBlockMetadata(fullFileName);
-		//给该新块添加第一个存储节点的信息
-		newBlock.addNodePort(node1.getPort());
-		newBlock.setBlockID(blockID);
-		newBlock.setBlockSize(blockSize);
-		//如果存在多个存储节点，给该块添加第二个存储节点的信息
-		if(nodes.size()>1) {
-			StorageNode node2 = nodes.get(1);
-			newBlock.addNodePort(node2.getPort());
-		}
-		//给新文件添加块和文件名
-		newFile.addBlock(blockID, newBlock);
+		//给新文件添加文件名
 		newFile.setFileName(fileName);
 		newFile.setFullFileName(fullFileName);
 		//添加新文件信息
 		this.fileMetadataList.put(fullFileName, newFile);
-		//在最小节点中添加该块并更新节点信息
-		node1.addBlock(blockID, newBlock);
-		this.nodeList.put(node1.getPort(), node1);
-		tempNodes.add(node1.getPort());
-		//如果存在，在次小的节点中添加该块信息并更新节点信息
-		if(nodes.size()>1) {
-			StorageNode node2 = nodes.get(1);
-			node2.addBlock(blockID, newBlock);
-			this.nodeList.put(node2.getPort(), node2);
-			tempNodes.add(node2.getPort());
-		}
-		temp.put(blockID, tempNodes);
 		//在目录记录中添加该文件,用文件的纯名称
 		root.addFile(this.getPathsByString(path), fileName);
-		return temp;
+		return true;
 	}
 
 	/**
@@ -110,7 +73,7 @@ public class NamespaceServer {
 			return null;
 		StorageFileMetadata sfm = this.fileMetadataList.get(fullFileName);
 		HashMap<UUID,StorageFileBlockMetadata> blocks = sfm.getBlocks();
-		ArrayList<StorageFileBlockMetadata> bs = (ArrayList<StorageFileBlockMetadata>) blocks.values();
+		ArrayList<StorageFileBlockMetadata> bs = new ArrayList<StorageFileBlockMetadata> (blocks.values());
 		HashMap<UUID,ArrayList<Integer>> temp = new HashMap<UUID,ArrayList<Integer>>();
 		int size = bs.size();
 		for(int i=0; i<size;i++){
@@ -137,7 +100,7 @@ public class NamespaceServer {
 		StorageFileMetadata sfm = this.fileMetadataList.get(fullFileName);
 		HashMap<UUID,StorageFileBlockMetadata> blocks = sfm.getBlocks();
 		//获取了该文件的所有block元数据
-		ArrayList<StorageFileBlockMetadata> bs = (ArrayList<StorageFileBlockMetadata>) blocks.values();
+		ArrayList<StorageFileBlockMetadata> bs = new ArrayList<StorageFileBlockMetadata>(blocks.values());
 		HashMap<Integer,ArrayList<UUID>> temp = new HashMap<Integer,ArrayList<UUID>>();
 		int size = bs.size();
 		for(int i=0; i<size;i++){
@@ -177,12 +140,12 @@ public class NamespaceServer {
 		String fullFileName = path+fileName;
 		StorageFileMetadata tempFile = this.fileMetadataList.get(fullFileName);
 		if(tempFile==null)
-			return 0;
+			return -1;
 		return tempFile.getFileSize();
 	}
 
-	public synchronized void mkdir(String path, String dir) {
-		root.addNewDir(this.getPathsByString(path), new StorageDir(dir));
+	public synchronized boolean mkdir(String path, String dir) {
+		return root.addNewDir(this.getPathsByString(path), new StorageDir(dir));
 	}
 
 	public synchronized HashMap<Integer,ArrayList<UUID>> delDir(String path, String dir) {
@@ -193,9 +156,9 @@ public class NamespaceServer {
 	private void myDelDir(String path, String dir,HashMap<Integer,ArrayList<UUID>> deleteNodeAndBlocks) {
 		ArrayList<String> paths = this.getPathsByString(path);
 		//获得要被删除的目录对象
-		StorageDir deletedDir = root.getDir(paths, dir);
+//		StorageDir deletedDir = root.getDir(paths, dir);
 		//获得目录中的所有内容
-		HashMap<String,ArrayList<String>> allContent = deletedDir.list(paths, dir);
+		HashMap<String,ArrayList<String>> allContent = root.list(paths, dir);
 		//获得当前目录的路径
 		path = path+dir+"/";
 		//获得当前目录的所有文件
@@ -245,7 +208,7 @@ public class NamespaceServer {
 		//生成该块编号
 		UUID blockID = UUID.randomUUID();
 		//获得所有存储节点并按存储数据大小排序
-		ArrayList<StorageNode> nodes = (ArrayList<StorageNode>)nodeList.values();
+		ArrayList<StorageNode> nodes = new ArrayList<StorageNode>(nodeList.values());
 		Collections.sort(nodes, new Comparator<StorageNode>(){
 			@Override
 			public int compare(StorageNode arg0, StorageNode arg1) {
@@ -273,13 +236,13 @@ public class NamespaceServer {
 //		this.fileMetadataList.put(fullFileName, newFile);
 		//在最小节点中添加该块并更新节点信息
 		node1.addBlock(blockID, newBlock);
-		this.nodeList.put(node1.getPort(), node1);
+//		this.nodeList.put(node1.getPort(), node1);
 		tempNodes.add(node1.getPort());
 		//如果存在，在次小的节点中添加该块信息并更新节点信息
 		if(nodes.size()>1) {
 			StorageNode node2 = nodes.get(1);
 			node2.addBlock(blockID, newBlock);
-			this.nodeList.put(node2.getPort(), node2);
+//			this.nodeList.put(node2.getPort(), node2);
 			tempNodes.add(node2.getPort());
 		}
 		temp.put(blockID, tempNodes);
@@ -420,5 +383,17 @@ public class NamespaceServer {
 			UUID _blocks
 			){
 		
+	}
+	
+	public void test() {
+		StorageNode a = new StorageNode();
+		a.setPort(1);
+		StorageNode b = new StorageNode();
+		b.setPort(2);
+		StorageNode c = new StorageNode();
+		c.setPort(3);
+		nodeList.put(1, a);
+		nodeList.put(2, b);
+		nodeList.put(3, c);
 	}
 }

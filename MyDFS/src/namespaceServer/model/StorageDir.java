@@ -19,14 +19,36 @@ public class StorageDir {
 	}
 	
 	/**
+	 * 测试该路径是否存在
+	 * @param paths
+	 * @return
+	 */
+	public boolean testPath(ArrayList<String> paths) {
+		if(paths.size()==0)
+			return true;
+		else {
+			if(this.containThisDir(paths.get(0))) {
+				String tempName = paths.get(0);
+				paths.remove(0);
+				return this.dirList.get(tempName).testPath(paths);
+			}
+			else
+				return false;
+		}
+	}
+	
+	/**
 	 * 添加新目录
 	 * @param paths 上级目录地址集合
 	 * @param dir 被添加目录
 	 * @return
 	 */
 	public boolean addNewDir(ArrayList<String> paths, StorageDir dir) {
-		if(paths.size()==0)
+		if(paths.size()==0) {
+			if(dirList.containsKey(dir.getName()))
+				return false;
 			dirList.put(dir.getName(), dir);
+		}
 		else {
 			String dirName = paths.get(0);
 			paths.remove(0);

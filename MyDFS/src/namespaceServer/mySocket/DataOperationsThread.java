@@ -57,43 +57,41 @@ public class DataOperationsThread extends Thread {
 		                else if(str.equals("Add")){
 		                	String path = br.readLine();
 		                	String fileName = br.readLine();
-		                	int blockSize = Integer.parseInt(br.readLine());
-		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = NamespaceServer.getNamespaceServer().addFile(path, fileName, blockSize);
-		                	ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
-		                	//每个uuid返回一行，uuid及端口用:分割
-		                	for(UUID blockID:blockIDs) {
-		                		ArrayList<Integer> ports = blocksAndPorts.get(blockID);
-		                		String out = blockID.toString();
-		                		for(int port:ports){
-		                			out = out+":"+String.valueOf(port);
-		                		}
-		                		pw.println(out);
-		                	}
+		                	boolean ans = NamespaceServer.getNamespaceServer().addFile(path, fileName);
+		                	pw.println(ans);
 		                }
 		                else if(str.equals("Get")){
 		                	String path = br.readLine();
 		                	String fileName = br.readLine();
 		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = NamespaceServer.getNamespaceServer().getFile(path, fileName);
-		                	ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
-		                	//每个uuid返回一行，uuid及端口用:分割
-		                	for(UUID blockID:blockIDs) {
-		                		ArrayList<Integer> ports = blocksAndPorts.get(blockID);
-		                		String out = blockID.toString();
-		                		for(int port:ports){
-		                			out = out+":"+String.valueOf(port);
+		                	if(blocksAndPorts!=null) {
+		                		boolean ans = true;
+		                		pw.println(ans);
+		                		ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
+		                		//每个uuid返回一行，uuid及端口用:分割
+		                		for(UUID blockID:blockIDs) {
+		                			ArrayList<Integer> ports = blocksAndPorts.get(blockID);
+		                			String out = blockID.toString();
+		                			for(int port:ports){
+		                				out = out+":"+String.valueOf(port);
+		                			}
+		                			pw.println(out);
 		                		}
-		                		pw.println(out);
 		                	}
+		                	else
+		                		pw.println(false);
 		                }
 		                else if(str.equals("Del")){
 		                	String path = br.readLine();
 		                	String fileName = br.readLine();
 		                	HashMap<Integer,ArrayList<UUID>> portsAndBlocks = NamespaceServer.getNamespaceServer().deleteFile(path, fileName);
 		                	if(portsAndBlocks==null) {
+		                		pw.println(false);
 		                		pw.println("file is not exists");
 		                	}
 		                	else {
 		                		SocketServer.getSocketServer().deleteRequest(portsAndBlocks);
+		                		pw.println(true);
 		                		pw.println("success!");
 		                	}
 		                }
@@ -112,7 +110,8 @@ public class DataOperationsThread extends Thread {
 		                else if(str.equals("Mkdir")){
 		                	String path = br.readLine();
 		                	String dirName = br.readLine();
-		                	NamespaceServer.getNamespaceServer().mkdir(path, dirName);
+		                	boolean ans = NamespaceServer.getNamespaceServer().mkdir(path, dirName);
+		                	pw.println(ans);
 		                	pw.println("finish");
 		                }
 		                else if(str.equals("Deldir")){
@@ -120,10 +119,12 @@ public class DataOperationsThread extends Thread {
 		                	String dir = br.readLine();
 		                	HashMap<Integer,ArrayList<UUID>> portsAndBlocks = NamespaceServer.getNamespaceServer().delDir(path, dir);
 		                	if(portsAndBlocks==null) {
+		                		pw.println(false);
 		                		pw.println("file or dir is not exists");
 		                	}
 		                	else {
 		                		SocketServer.getSocketServer().deleteRequest(portsAndBlocks);
+		                		pw.println(true);
 		                		pw.println("success!");
 		                	}
 		                }
@@ -131,23 +132,31 @@ public class DataOperationsThread extends Thread {
 		                	String path = br.readLine();
 		                	String dir = br.readLine();
 		                	HashMap<String,ArrayList<String>> listMap = NamespaceServer.getNamespaceServer().list(path, dir);
-		                	String fileout="file";
-		                	//如果该目录下有文件输出格式为“file:filename1:filename2:...”
-		                	if(listMap.containsKey("file")&&(!listMap.get("file").isEmpty())) {
-		                		ArrayList<String> files = listMap.get("file");
-		                		for(String file:files) {
-		                			fileout=fileout+":"+file;
-		                		}
-		                		pw.println(fileout);
+		                	if(listMap==null) {
+		                		boolean ans = false;
+		                		pw.println(ans);
 		                	}
-		                	String dirout = "dir";
-		                	//如果该目录下有子目录输出格式为“dir:dirname1:dirname2:...”
-		                	if(listMap.containsKey("dir")&&(!listMap.get("dir").isEmpty())) {
-		                		ArrayList<String> dirs = listMap.get("dir");
-		                		for(String ldir:dirs) {
-		                			dirout=dirout+":"+ldir;
+		                	else {
+		                		boolean ans = true;
+		                		pw.println(ans);
+		                		String fileout="file";
+		                		//如果该目录下有文件输出格式为“file:filename1:filename2:...”
+		                		if(listMap.containsKey("file")&&(!listMap.get("file").isEmpty())) {
+		                			ArrayList<String> files = listMap.get("file");
+		                			for(String file:files) {
+		                				fileout=fileout+":"+file;
+		                			}
+		                			pw.println(fileout);
 		                		}
-		                		pw.println(dirout);
+		                		String dirout = "dir";
+		                		//如果该目录下有子目录输出格式为“dir:dirname1:dirname2:...”
+		                		if(listMap.containsKey("dir")&&(!listMap.get("dir").isEmpty())) {
+		                			ArrayList<String> dirs = listMap.get("dir");
+		                			for(String ldir:dirs) {
+		                				dirout=dirout+":"+ldir;
+		                			}
+		                			pw.println(dirout);
+		                		}
 		                	}
 		                }
 		                else if(str.equals("Append")){
@@ -155,19 +164,24 @@ public class DataOperationsThread extends Thread {
 		                	String fileName = br.readLine();
 		                	int blockSize = Integer.parseInt(br.readLine());
 		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = NamespaceServer.getNamespaceServer().append(path, fileName, blockSize);
-		                	ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
-		                	//每个uuid返回一行，uuid及端口用:分割
-		                	for(UUID blockID:blockIDs) {
-		                		ArrayList<Integer> ports = blocksAndPorts.get(blockID);
-		                		String out = blockID.toString();
-		                		for(int port:ports){
-		                			out = out+":"+String.valueOf(port);
+		                	if(blocksAndPorts!=null){
+		                		pw.println(true);
+		                		ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
+		                		//每个uuid返回一行，uuid及端口用:分割
+		                		for(UUID blockID:blockIDs) {
+		                			ArrayList<Integer> ports = blocksAndPorts.get(blockID);
+		                			String out = blockID.toString();
+		                			for(int port:ports){
+		                				out = out+":"+String.valueOf(port);
+		                			}
+		                			pw.println(out);
 		                		}
-		                		pw.println(out);
 		                	}
+		                	else
+		                		pw.println(false);
 		                }
 		                else{}
-		                pw.println("Message Received");  
+		                pw.println("END");  
 		                pw.flush();  
 		            } catch (Exception e) {  
 		                try {  
