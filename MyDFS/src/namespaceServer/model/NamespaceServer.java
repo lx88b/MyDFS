@@ -28,7 +28,7 @@ public class NamespaceServer {
 	HashMap<String,StorageFileMetadata> fileMetadataList = new HashMap<String,StorageFileMetadata>();
 	//Ŀ¼
 	StorageDir root = new StorageDir("root");
-	private static NamespaceServer ns = null;
+	private static NamespaceServer ns;
 	public static NamespaceServer getNamespaceServer() {
 		if(ns==null)
 			ns = new NamespaceServer();

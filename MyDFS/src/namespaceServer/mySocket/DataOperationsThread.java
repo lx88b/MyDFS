@@ -17,14 +17,14 @@ import java.util.UUID;
 
 import namespaceServer.model.NamespaceServer;
 
-public class SocketAccessableThread extends Thread {
+public class DataOperationsThread extends Thread {
 	
 	private ServerSocket s = null;
 	private Socket socket = null;
 	private BufferedReader br = null;  
     private PrintWriter pw = null;
 	
-	public SocketAccessableThread(){
+	public DataOperationsThread(){
 		try{
 			start();
 		} catch(Exception e) {
@@ -58,8 +58,7 @@ public class SocketAccessableThread extends Thread {
 		                	String path = br.readLine();
 		                	String fileName = br.readLine();
 		                	int blockSize = Integer.parseInt(br.readLine());
-		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = 
-		                			NamespaceServer.getNamespaceServer().addFile(path, fileName, blockSize);
+		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = NamespaceServer.getNamespaceServer().addFile(path, fileName, blockSize);
 		                	ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
 		                	//每个uuid返回一行，uuid及端口用:分割
 		                	for(UUID blockID:blockIDs) {
@@ -74,8 +73,7 @@ public class SocketAccessableThread extends Thread {
 		                else if(str.equals("Get")){
 		                	String path = br.readLine();
 		                	String fileName = br.readLine();
-		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = 
-		                			NamespaceServer.getNamespaceServer().getFile(path, fileName);
+		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = NamespaceServer.getNamespaceServer().getFile(path, fileName);
 		                	ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocksAndPorts.keySet());
 		                	//每个uuid返回一行，uuid及端口用:分割
 		                	for(UUID blockID:blockIDs) {
@@ -169,7 +167,7 @@ public class SocketAccessableThread extends Thread {
 		                	}
 		                }
 		                else{}
-		                pw.println("END");  
+		                pw.println("Message Received");  
 		                pw.flush();  
 		            } catch (Exception e) {  
 		                try {  
