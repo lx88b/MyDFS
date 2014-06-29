@@ -17,14 +17,14 @@ import java.util.UUID;
 
 import namespaceServer.model.NamespaceServer;
 
-public class SocketAccessableThread extends Thread {
+public class DataOperationsThread extends Thread {
 	
 	private ServerSocket s = null;
 	private Socket socket = null;
 	private BufferedReader br = null;  
     private PrintWriter pw = null;
 	
-	public SocketAccessableThread(){
+	public DataOperationsThread(){
 		try{
 			start();
 		} catch(Exception e) {
