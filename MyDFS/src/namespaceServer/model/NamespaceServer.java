@@ -1,5 +1,13 @@
 package namespaceServer.model;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.KeyStore.Entry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,10 +17,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 import javax.swing.SpringLayout.Constraints;
 
-public class NamespaceServer {
+public class NamespaceServer { 
 	//节点端口：节点对象
 	HashMap<Integer,StorageNode> nodeList = new HashMap<Integer,StorageNode>();
 	//文件名：文件对象
@@ -301,9 +310,33 @@ public class NamespaceServer {
 			return;
 		//获得所有要移动的块
 		HashMap<UUID,StorageFileBlockMetadata> blocks = deletedNode.getBlocks();
+		{//修改元数据  问题?
+			for(UUID uid : blocks.keySet()){
+				StorageFileBlockMetadata _sfbm = blocks.get(uid);
+				_sfbm.deleteNodePort(nodePort);
+			}
+		}
 		//获得所有要移动的块id
 		ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocks.keySet());
-		
+		ArrayList<StorageNode> snList = new ArrayList<StorageNode>();
+		{
+			for(Integer iI:nodeList.keySet()){
+				snList.add(nodeList.get(iI));
+			}
+		}
+		for(UUID uid : blockIDs){
+			int _port = blocks.get(uid).getOnePort();
+			StorageNode _from = nodeList.get(_port);
+			
+			Collections.sort(snList);
+			for(int i = 0; i < snList.size(); i ++){
+				if(snList.get(i).existBlock(uid)){
+					continue;
+				}
+				this.transerBlock(_from, snList.get(i), uid);
+				break;
+			}
+		}
 	}
 	
 	public synchronized void addNode(int nodePort) {
@@ -329,11 +362,63 @@ public class NamespaceServer {
 		}
 	}
 	
+	public synchronized void heartBeat(){
+		HashSet<Integer> lostSet = new HashSet<Integer>();
+		for(java.util.Map.Entry<Integer, StorageNode> iE: nodeList.entrySet()){
+			StorageNode _node = iE.getValue();
+			int _heart_beat_port = _node.getPort() + 1;
+			Socket _socket = null;
+			BufferedReader _br = null;  
+		    PrintWriter _pw = null;
+		    String _line = null;
+			try {
+				_socket = new Socket("127.0.0.1", _heart_beat_port);
+				_socket.setSoTimeout(100);
+				_br = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
+				_pw = new PrintWriter
+						(new BufferedWriter
+								(new OutputStreamWriter
+										(_socket.getOutputStream())),true);  
+				_pw.println("HEARTBEAT");
+				_pw.flush();
+				_line = _br.readLine();
+				if(_line == null){
+					lostSet.add(_heart_beat_port);
+				}
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.out.print("\n[node of port "+_heart_beat_port+" is lost]\n");
+				lostSet.add(_heart_beat_port);
+			}
+			
+		}
+	  for(Integer iI:lostSet){
+		 this.removeNode(iI.intValue());
+		  /* Assume that atmost one node crash once */
+		  break;
+	  }
+	}
+	
+	
+	
 	private synchronized void transerBlocks(
 			StorageNode _from, StorageNode _to, 
 			final HashMap<UUID, StorageFileBlockMetadata> _blocks
 			)
 	{
+		for(UUID uid : _blocks.keySet()){
+			transerBlock(_from, _to, uid);
+		}
+	}
+	
+	private synchronized void transerBlock(
+			StorageNode _from, StorageNode _to, 
+			UUID _blocks
+			){
 		
 	}
 }

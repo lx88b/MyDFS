@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -222,11 +223,20 @@ class blockManager{
 		block2size.put(_block, _data.length());
 		storeBlock(_block, _data);
 	}
+	public void delBlock(String _block){
+		block2size.remove(_block);
+		cleanBlock(_block);
+	}
 	/*
 	 * private methods
 	 */
 	private String getBlockFile(String _block){
 		return rootDir+"/b_"+_block;
+	}
+	private void cleanBlock(String _block){
+		String _file = getBlockFile(_block);
+		File _f = new File(_file);
+		_f.delete();
 	}
 	private void storeBlock(String _block, String _data){
 		String _file = getBlockFile(_block);
@@ -268,16 +278,24 @@ enum OPType{
 class storageThread extends Thread{
 	private String target_IP;
 	private int target_port;
+	private int listen_port;
 	private OPType op_type;
 	private static int sleep_time = 60*1000;
 	/* all relative data is saved in this variable */
 	private String data;
-	public storageThread(String _t_ip, int _t_port, OPType _op_type, String _data) {
+	public storageThread(
+			String _t_ip, 
+			int _t_port, 
+			OPType _op_type, 
+			String _data,
+			int _listen_port
+			) {
 		// TODO Auto-generated constructor stub
 		target_IP = _t_ip;
 		target_port = _t_port;
 		op_type = _op_type;
 		setData(_data);
+		listen_port = _listen_port;
 	}
 	
 	@Override
@@ -307,30 +325,42 @@ class storageThread extends Thread{
 	}
 	
 	public void heartBeat(){
-		while(true){
-			Socket _socket = null;
-			try {
-				
-				_socket = new Socket(target_IP, target_port);
-				
-			} catch (UnknownHostException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+		ServerSocket _server = null;
+		Socket _socket = null;
+		BufferedReader _br = null;  
+	    PrintWriter _pw = null;
+		try {			
+			_server = new ServerSocket(listen_port);
+			while(true){
+				_socket = _server.accept();
+				_br = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
+				_pw = new PrintWriter
+						(new BufferedWriter
+								(new OutputStreamWriter
+										(_socket.getOutputStream())),true);  
+				String _line = _br.readLine();
+				if(_line.equals("Del")){
+					_line = _br.readLine();
+					while(! _line.equals("END")){
+						storage.blockManager.delBlock(_line);
+						_line = _br.readLine();						
+					}
+				}
+				else if(_line.equals("HEARTBEAT")){
+					_pw.print("hello");
+					_pw.flush();
+				}
+				else if(true){
+					
+				}
+				_br.close();
+				_pw.close();
+				_socket.close();
 			}
 			
-			this.send(_socket, "HEARTBEAT");
-			
-			try {
-				
-				Thread.sleep(sleep_time);
-				
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		} catch (IOException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
 		}
 	}
 
@@ -396,15 +426,15 @@ class storageThread extends Thread{
 	}
 }
 
-public class storage extends Thread{
+public class storage{
 	
 
-	public  String mIP;
-	public  int mPort;
-	public  blockManager blockManager;
-	public  storageThread heartBeat;
-	public  String serverIP;
-	public  int serverPort = 6001;
+	public static  String mIP;
+	public static  int mPort;
+	public static  blockManager blockManager;
+	public static  storageThread heartBeat;
+	public static  String serverIP = "127.0.0.1";
+	public static  int serverPort = 6001;
 	public storage(String _ip, int _port, String _server_ip, int _server_port, String _root_dir){
 		mIP = _ip;
 		mPort = _port;
@@ -413,14 +443,39 @@ public class storage extends Thread{
 		blockManager = new blockManager(_root_dir);
 	}
 	
-	@Override
-	public  void run(){
+	/* java storage port rootdir */
+	public  static void main(String[] args){
 		{
-			heartBeat = new storageThread(serverIP, serverPort, OPType.heartBeat, "");
-			heartBeat.start();
+			mIP = "127.0.0.1";
+			mPort = Integer.parseInt(args[0]);
+			blockManager = new blockManager(args[1]);
 		}
 		{
+			heartBeat = new storageThread(serverIP, serverPort, OPType.heartBeat, "", mPort+1);
+			heartBeat.start();
+		}
+	}
+	
+	public static void listen(){
+		ServerSocket _server = null;
+		Socket _socket = null;
+		BufferedReader _br = null;  
+	    PrintWriter _pw = null;
+	    try 
+	    {
+			_server = new ServerSocket(mPort);
+			while(true){
+				_socket = _server.accept();
+				_br = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
+				_pw = new PrintWriter
+						(new BufferedWriter
+								(new OutputStreamWriter
+										(_socket.getOutputStream())),true);  
+				
+			}
 			
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
 	}
 

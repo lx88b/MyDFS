@@ -20,6 +20,28 @@ public class StorageFileBlockMetadata {
 	public UUID getBlockID() {
 		return blockID;
 	}
+	public boolean deleteNodePort(int _port){
+		for(int i = 0; i < nodePorts.size(); i ++)
+		{
+			if(nodePorts.get(i).intValue() == _port){
+				nodePorts.remove(i);
+				return true;
+			}
+		}
+		return false;
+	}
+	public boolean existPort(int _port){
+		for(int i = 0; i < nodePorts.size(); i ++)
+		{
+			if(nodePorts.get(i).intValue() == _port){
+				return true;
+			}
+		}
+		return false;
+	}
+	public int getOnePort(){
+		return nodePorts.get(0).intValue();
+	}
 	public void addNodePort(int port) {
 		nodePorts.add(port);
 	}

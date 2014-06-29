@@ -3,7 +3,7 @@ package namespaceServer.model;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class StorageNode {
+public class StorageNode implements Comparable<StorageNode>{
 	private int port=0;
 	private int nodeSize=0;
 	private HashMap<UUID,StorageFileBlockMetadata> blocks = new HashMap<UUID,StorageFileBlockMetadata>();
@@ -30,8 +30,15 @@ public class StorageNode {
 			nodeSize -= block.getBlockSize();
 		blocks.remove(blockID);
 	}
-	
+	public boolean existBlock(UUID blockID){
+		return blocks.keySet().contains(blockID);
+	}
 	public HashMap<UUID,StorageFileBlockMetadata> getBlocks() {
 		return this.blocks;
+	}
+	@Override
+	public int compareTo(StorageNode o) {
+		// TODO Auto-generated method stub
+		return nodeSize - o.getNodeSize();
 	}
 }
