@@ -21,6 +21,8 @@ import java.util.concurrent.TimeoutException;
 
 import javax.swing.SpringLayout.Constraints;
 
+import namespaceServer.mySocket.CommandThread;
+
 public class NamespaceServer { 
 	//节点端口：节点对象
 	HashMap<Integer,StorageNode> nodeList = new HashMap<Integer,StorageNode>();
@@ -378,11 +380,20 @@ public class NamespaceServer {
 		}
 	}
 	
-	private synchronized void transerBlock(
-			StorageNode _from, StorageNode _to, 
-			UUID _blocks
-			){
-		
+	private synchronized void transerBlock(StorageNode _from, StorageNode _to,
+			UUID _block) {
+		int _from_port = _from.getPort();
+		int _to_port = _to.getPort();
+		CommandThread _ct_send = new CommandThread(_from_port, _to_port,
+				"SEND",
+
+				_block.toString());
+		CommandThread _ct_recv = new CommandThread(_to_port, _from_port,
+				"RECV",
+
+				_block.toString());
+		_ct_send.start();
+		_ct_recv.start();
 	}
 	
 	public void test() {

@@ -364,16 +364,16 @@ class clientOperation extends Thread{
 	
 	private String getPathOfFile(String _target_file){
 		File _f = new File(_target_file);
-		return _f.getParent();
+		return _f.getParent()+"/";
 	}
 	
 }
 
 public class client {
 	public  String serverIP = "127.0.0.1";
-	public  int serverPort = 6001;
+	public  int serverPort = 6000;
 	
 	 public static void main(String[] args){
-		 System.out.print("finish\n");
+		 System.out.print("client start\n");
 	 }
 }
