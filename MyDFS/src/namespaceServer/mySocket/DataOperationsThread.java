@@ -25,11 +25,6 @@ public class DataOperationsThread extends Thread {
     private PrintWriter pw = null;
 	
 	public DataOperationsThread(){
-		try{
-			start();
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
 	}
 	
 	public void run() {
@@ -99,7 +94,13 @@ public class DataOperationsThread extends Thread {
 		                	String path = br.readLine();
 		                	String fileName = br.readLine();
 		                	boolean ans = NamespaceServer.getNamespaceServer().existFile(path, fileName);
-		                	pw.println(ans);
+		                	if(ans){
+		                		pw.println("Yes");
+		                	}
+		                	else
+		                	{
+		                		pw.println("No");
+		                	}
 		                }
 		                else if(str.equals("Size")){
 		                	String path = br.readLine();

@@ -12,9 +12,11 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Scanner;
 enum clientOPType{
 	ADD,
+	APPEND,
 	GET,
 	DEL_FILE,
 	EXIST_FILE,
@@ -79,6 +81,10 @@ class clientOperation extends Thread{
 			this.send(_socket2server, _msg_send);
 			_msg_recv = this.recv(_socket2server);
 			_socket2server.close();
+			if(_msg_recv.indexOf("false") !=-1){
+				System.out.print("failed in get file:"+target_file+"\n");
+				return;
+			}
 			
 			String[] _sp = _msg_recv.split("\n");
 			StringBuffer _sb = new StringBuffer();			
@@ -118,7 +124,7 @@ class clientOperation extends Thread{
 		 * What if _path is null ???
 		 */
 		String _name = this.getFileName(target_file);
-		String _msg_send = "Add\n"+_path+"\n"+_name+"\n"+Data.length();
+		String _msg_send = "Add\n"+_path+"\n"+_name+"\n"+ 0;
 		String _msg_recv = null;
 		Socket _socket2server = null;
 		Socket _socket2storage = null;
@@ -127,23 +133,12 @@ class clientOperation extends Thread{
 			this.send(_socket2server, _msg_send);
 			_msg_recv = this.recv(_socket2server);
 			_socket2server.close();
-			
-			String[] _sp = _msg_recv.split("\n");
-			for(String iStr: _sp)
-			{
-				String[] tmp_sp = iStr.split(":");
-				String _block = tmp_sp[0];
-				for(int i = 1; i < tmp_sp.length; i ++)
-				{
-					int _port = Integer.parseInt(tmp_sp[i]);
-					_socket2storage = new Socket("127.0.0.1", _port);
-					_msg_send = "Add\n" + _block + "\n" + Data;
-					this.send(_socket2storage, _msg_send);
-					_msg_recv = this.recv(_socket2storage);
-					_socket2storage.close();
-				}
+			if(_msg_recv.indexOf("false") !=-1){
+				System.out.print("failed in add file:"+target_file+"\n");
+				return;
 			}
-			System.out.print("Add successfully\n");
+			
+			System.out.print(_msg_recv);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -162,11 +157,17 @@ class clientOperation extends Thread{
 		String _msg_send = "Del\n"+_path+"\n"+_name;
 		String _msg_recv = null;
 		Socket _socket2server = null;
+		
 		try {
 			_socket2server = new Socket(target_IP, target_port);
 			this.send(_socket2server, _msg_send);
 			_msg_recv = this.recv(_socket2server);
 			_socket2server.close();
+			if(_msg_recv.indexOf("false") !=-1){
+				System.out.print("failed in delete file:"+target_file+"\n");
+				return;
+			}
+			
 			System.out.print(_msg_recv+"\n");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -239,6 +240,11 @@ class clientOperation extends Thread{
 			this.send(_socket2server, _msg_send);
 			_msg_recv = this.recv(_socket2server);
 			_socket2server.close();
+			if(_msg_recv.indexOf("false") !=-1){
+				System.out.print("failed in delete dir:"+target_file+"\n");
+				return;
+			}
+			
 			System.out.print(_msg_recv+"\n");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -263,6 +269,11 @@ class clientOperation extends Thread{
 			this.send(_socket2server, _msg_send);
 			_msg_recv = this.recv(_socket2server);
 			_socket2server.close();
+			if(_msg_recv.indexOf("false") !=-1){
+				System.out.print("failed in make dir:"+target_file+"\n");
+				return;
+			}
+			
 			System.out.print(_msg_recv+"\n");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -287,6 +298,11 @@ class clientOperation extends Thread{
 			this.send(_socket2server, _msg_send);
 			_msg_recv = this.recv(_socket2server);
 			_socket2server.close();
+			if(_msg_recv.indexOf("false") !=-1){
+				System.out.print("failed in list dir:"+target_file+"\n");
+				return;
+			}
+			
 			System.out.print(_msg_recv+"\n");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -294,6 +310,82 @@ class clientOperation extends Thread{
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+	
+	public void AddNode(){
+		/*
+		 * What if _path is null ???
+		 */
+		String _name = this.getFileName(target_file);
+		String _msg_send = "AddNode\n"+Data;//Data shoule be port
+		String _msg_recv = null;
+		Socket _socket2server = null;
+		try {
+			_socket2server = new Socket(target_IP, target_port);
+			this.send(_socket2server, _msg_send);
+			_msg_recv = this.recv(_socket2server);
+			_socket2server.close();
+			if(_msg_recv.indexOf("false") !=-1){
+				System.out.print("failed in list dir:"+target_file+"\n");
+				return;
+			}
+			
+			System.out.print(_msg_recv+"\n");
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void Append(){
+		String _path = this.getPathOfFile(target_file);
+		/*
+		 * What if _path is null ???
+		 */
+		String _name = this.getFileName(target_file);
+		String _msg_send = "Append\n"+_path+"\n"+_name+"\n"+Data.length();
+		String _msg_recv = null;
+		Socket _socket2server = null;
+		Socket _socket2storage = null;
+		try {
+			_socket2server = new Socket(target_IP, target_port);
+			this.send(_socket2server, _msg_send);
+			_msg_recv = this.recv(_socket2server);
+			_socket2server.close();
+			if(_msg_recv.indexOf("false") !=-1){
+				System.out.print("failed in get file:"+target_file+"\n");
+				return;
+			}
+			
+			String[] _sp = _msg_recv.split("\n");
+			for(String iStr: _sp)
+			{
+				String[] tmp_sp = iStr.split(":");
+				String _block = tmp_sp[0];
+				for(int i = 1; i < tmp_sp.length; i ++)
+				{
+					int _port = Integer.parseInt(tmp_sp[i]);
+					_socket2storage = new Socket("127.0.0.1", _port);
+					_msg_send = "Append\n" + _block + "\n" + Data;
+					this.send(_socket2storage, _msg_send);
+					_msg_recv = this.recv(_socket2storage);
+					_socket2storage.close();
+				}
+			}
+			{
+				System.out.println("Append "+_name+" successfully!\n");
+			}
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.println("Append "+_name+" failed!\n");
 		}
 	}
 	
@@ -344,6 +436,9 @@ class clientOperation extends Thread{
 				if(_ret.equals("")){
 					_ret = _line;
 				}
+				if(_line.equals("true")){
+					continue;
+				}
 				else
 				{
 					_ret += "\n"+_line;
@@ -368,12 +463,132 @@ class clientOperation extends Thread{
 	}
 	
 }
-
+/*
+ * Operation input: 
+ * get/add/exist/delete/sizeof -f file_url
+ * append -f file_url data
+ * create/delete/list -d path_url
+ * 
+ */
 public class client {
 	public  String serverIP = "127.0.0.1";
 	public  int serverPort = 6000;
+	public static String clientDir;
 	
 	 public static void main(String[] args){
 		 System.out.print("client start\n");
+		 {
+			 clientDir = args[0];
+		 }
+		 Scanner _sc = new Scanner(System.in);
+		 HashSet<String> opSet = new HashSet<String>();
+		 {
+			 opSet.add("get");
+			 opSet.add("add");
+			 opSet.add("exist");
+			 opSet.add("delete");
+			 opSet.add("sizeof");
+			 opSet.add("append");
+			 opSet.add("create");
+			 opSet.add("list");
+		 }
+		 while(true){
+			 System.out.print("Please input the request in the form as: \n");
+			 System.out.print("get/add/exist/delete/sizeof -f file_url\n");
+			 System.out.print("append -f file_url data\n");
+			 System.out.print("create/delete/list -d path_url\n");
+			 String _line = _sc.nextLine();
+			 clientOPType _op = null;
+			 int _space1 = 0, _space2 = 0;
+			 {//parse the optype
+				 _space1 = _line.indexOf(" ");
+				 {
+					 if(_space1 == -1) {
+						 System.out.print("error input\n");
+						 continue;
+					 }
+				 }
+				 String _sop = _line.substring(0, _space1);
+				 {
+					 if(! opSet.contains(_sop)){
+						 System.out.print("error input\n");
+						 continue;
+					 }
+				 }
+				 _space2 = _line.indexOf(_space1+1);
+				 {
+					 if(_space2 == -1) {
+						 System.out.print("error input\n");
+						 continue;
+					 }
+				 }
+				 String _param = _line.substring(_space1+1,_space2);
+				 {
+					 if(!_param.equals("-f") && !_param.equals("-d")){
+						 System.out.print("error input\n");
+						 continue;
+					 }
+				 }
+				 _op = getOpType(_sop, _param);
+			 }//end parse optype
+			 String _data = null;
+			 String _target_url = null;
+			 if(_op.equals(clientOPType.APPEND)){
+				 int _space3 = _line.indexOf(" ", _space2+1);
+				 if(_space3 == -1){
+					 System.out.print("error input\n");
+					 continue;
+				 }
+				 _target_url = _line.substring(_space2+1, _space3);
+				 _data = _line.substring(_space3+1);
+			 }
+			 else {
+				_target_url = _line.substring(_space2+1);
+			}
+			clientOperation _cop = new clientOperation
+					("127.0.0.1", 6000, _op, _target_url, _data, clientDir);
+		 }
+	 }
+	 
+	 public static clientOPType getOpType(String _op, String _param){
+		 if(_op.equals("get")){
+			 return clientOPType.GET;
+		 }
+		 else
+		 if(_op.equals("add")){
+			 return clientOPType.ADD;
+		 }
+		 else
+		 if(_op.equals("delete")){
+			 if(_param.equals("-f"))
+			 {
+				 return clientOPType.DEL_FILE;
+			 }
+			 else
+			 {
+				 return clientOPType.DEL_FOLDER;
+			 }
+		 }
+		 else
+		 if(_op.equals("exist")){
+			return clientOPType.EXIST_FILE;
+		 }
+		 else
+		 if(_op.equals("append")){
+			 return clientOPType.APPEND;
+		 }
+		 else
+		 if(_op.equals("create")){
+			 return clientOPType.CREATE;
+		 }
+		 else
+		 if(_op.equals("list")){
+			 return clientOPType.LIST;
+		 }
+		 return null;
+	 }
+	 
+	 public static void testStorage(){
+		 
 	 }
 }

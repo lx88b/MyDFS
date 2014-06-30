@@ -339,7 +339,7 @@ public class storage{
 					_st.start();
 					_st.join();
 				}
-				else if(_line.equals("Add")){
+				else if(_line.equals("Append")){
 					String block = _br.readLine();
 					String _data = "";
 					{
@@ -350,13 +350,18 @@ public class storage{
 						}
 						blockManager.addBlock(block, _data);
 					}
+				}
+				else if (_line.equals("Get")) {
+					String block = _br.readLine();
+					String _data = blockManager.getBlockData(block);
+					_pw.println(_data);
+					_pw.println("END");
+					}
 					_br.close();
 					_pw.close();
 					_socket.close();
 				}
 				
-			}
-			
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
