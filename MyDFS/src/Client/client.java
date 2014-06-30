@@ -10,6 +10,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Proxy;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ enum clientOPType{
 	SIZEOF,
 	CREATE,
 	DEL_FOLDER,
+	ADDNODE,
 	LIST
 }
 
@@ -41,7 +43,6 @@ class clientOperation extends Thread{
 	private int target_port;
 	private String target_file;
 	private String Data;
-	private String Response;
 	private String clientDir;
 	public clientOperation(
 			String _ip, int _port,
@@ -57,13 +58,72 @@ class clientOperation extends Thread{
 		target_file = _file; 
 		Data = _data;
 		clientDir = _dir;
+		
 	}
 	@Override
 	public void run(){
-		System.out.print(OPtype + "\n");
-		System.out.print(target_IP + "\n");
-		System.out.print(OPtype + "\n");
-		System.out.print(Data + "\n");
+		{
+			System.out.print(OPtype + "--type\n");
+			System.out.print(target_port + "--port\n");
+			System.out.print(Data + "--data\n");
+			System.out.print(target_file+"--file\n");
+		}
+		switch (OPtype) {
+		case ADD:
+		{
+			this.add();
+			break;
+		}
+		case APPEND:
+		{
+			this.Append();
+			break;
+		}
+		case GET:
+		{
+			this.get();
+			break;
+		}
+		case DEL_FILE:
+		{
+			this.del();
+			break;
+		}
+		case EXIST_FILE:
+		{
+			this.exist();
+			break;
+		}
+		case SIZEOF:
+		{
+			this.Size();
+			break;
+		}
+		case CREATE:
+		{
+			this.mkDir();
+			break;
+		}
+		case DEL_FOLDER:
+		{
+			this.delDir();
+			break;
+		}
+		case ADDNODE:
+		{
+			this.AddNode();
+			break;
+		}
+		case LIST:
+		{
+			this.List();
+			break;
+		}
+		default:
+		{
+			break;
+		}
+		}
 	}
 	
 	public void get(){
@@ -270,11 +330,14 @@ class clientOperation extends Thread{
 			_msg_recv = this.recv(_socket2server);
 			_socket2server.close();
 			if(_msg_recv.indexOf("false") !=-1){
+				{
+					client.log("recv:"+_msg_recv+"\n");
+				}
 				System.out.print("failed in make dir:"+target_file+"\n");
 				return;
 			}
 			
-			System.out.print(_msg_recv+"\n");
+			System.out.print("receive: ["+_msg_recv+"]\n");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -360,7 +423,9 @@ class clientOperation extends Thread{
 				System.out.print("failed in get file:"+target_file+"\n");
 				return;
 			}
-			
+			{
+				client.log("append:recv from server: "+ _msg_recv);
+			}
 			String[] _sp = _msg_recv.split("\n");
 			for(String iStr: _sp)
 			{
@@ -377,16 +442,19 @@ class clientOperation extends Thread{
 				}
 			}
 			{
-				System.out.println("Append "+_name+" successfully!\n");
+				System.out.println(_msg_recv);
 			}
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (IOException e) {
+		} catch (SocketException e) {
+			// TODO: handle exception
+			System.out.println("Append "+_name+" failed!\n");
+		}catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.out.println("Append "+_name+" failed!\n");
-		}
+		} 
 	}
 	
 	private String getBlockData(String _recv){
@@ -413,7 +481,8 @@ class clientOperation extends Thread{
 				_pw.flush();
 			}
 			_pw.println("END");
-			_pw.close();
+			_pw.flush();
+//			_pw.close();
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -430,21 +499,26 @@ class clientOperation extends Thread{
 			String _line = null;
 			while(true){
 				_line = _br.readLine();
+				{
+					client.log("recv:["+_line+"]");
+				}
 				if(_line.equals("END")){
 					break;
 				}
-				if(_ret.equals("")){
-					_ret = _line;
-				}
+				else
 				if(_line.equals("true")){
 					continue;
+				}
+				else
+				if(_ret.equals("")){
+					_ret = _line;
 				}
 				else
 				{
 					_ret += "\n"+_line;
 				}
 			}
-			_br.close();
+//			_br.close();
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -454,11 +528,20 @@ class clientOperation extends Thread{
 	
 	private String getFileName(String _target_file){
 		File _f = new File(_target_file);
+		{
+			client.log(_target_file + ": has name:"+_f.getName()+"\n");
+		}
 		return _f.getName();
 	}
 	
 	private String getPathOfFile(String _target_file){
 		File _f = new File(_target_file);
+		if(_f.getParent()==null){
+			return "";
+		}
+		{
+			client.log(_target_file + ": has path:"+_f.getParent()+"\n");
+		}
 		return _f.getParent()+"/";
 	}
 	
@@ -474,11 +557,24 @@ public class client {
 	public  String serverIP = "127.0.0.1";
 	public  int serverPort = 6000;
 	public static String clientDir;
+	public final static boolean debug_mode = true;
+	public static void log(String _str){
+		if(debug_mode)
+		{
+			System.out.println("log: "+_str);
+		}
+	}
 	
 	 public static void main(String[] args){
 		 System.out.print("client start\n");
 		 {
-			 clientDir = args[0];
+			 clientDir = "client";
+			 {
+				 File _f = new File(clientDir);
+				 if(! _f.exists()){
+					 _f.mkdir();
+				 }
+			 }
 		 }
 		 Scanner _sc = new Scanner(System.in);
 		 HashSet<String> opSet = new HashSet<String>();
@@ -491,12 +587,14 @@ public class client {
 			 opSet.add("append");
 			 opSet.add("create");
 			 opSet.add("list");
+			 opSet.add("addnode");
 		 }
 		 while(true){
-			 System.out.print("Please input the request in the form as: \n");
-			 System.out.print("get/add/exist/delete/sizeof -f file_url\n");
-			 System.out.print("append -f file_url data\n");
-			 System.out.print("create/delete/list -d path_url\n");
+			 System.out.print("******Please input the request in the form as: \n");
+			 System.out.print("******get/add/exist/delete/sizeof -f file_url\n");
+			 System.out.print("******append -f file_url data\n");
+			 System.out.print("******addnode -p port\n");
+			 System.out.print("******create/delete/list -d path_url\n");
 			 String _line = _sc.nextLine();
 			 clientOPType _op = null;
 			 int _space1 = 0, _space2 = 0;
@@ -504,49 +602,67 @@ public class client {
 				 _space1 = _line.indexOf(" ");
 				 {
 					 if(_space1 == -1) {
-						 System.out.print("error input\n");
+						 System.out.print("error 01:\n");
 						 continue;
 					 }
 				 }
 				 String _sop = _line.substring(0, _space1);
 				 {
 					 if(! opSet.contains(_sop)){
-						 System.out.print("error input\n");
+						 System.out.print("error 02\n");
 						 continue;
 					 }
 				 }
-				 _space2 = _line.indexOf(_space1+1);
+				 _space2 = _line.indexOf(" ", _space1+1);
 				 {
 					 if(_space2 == -1) {
-						 System.out.print("error input\n");
+						 System.out.print("error 03\n");
 						 continue;
 					 }
 				 }
 				 String _param = _line.substring(_space1+1,_space2);
 				 {
-					 if(!_param.equals("-f") && !_param.equals("-d")){
-						 System.out.print("error input\n");
+					 if(
+							 !_param.equals("-f") && 
+							 !_param.equals("-d") &&
+							 !_param.equals("-p")
+						)
+					 {
+						 System.out.print("error 04\n");
 						 continue;
 					 }
 				 }
 				 _op = getOpType(_sop, _param);
 			 }//end parse optype
 			 String _data = null;
-			 String _target_url = null;
+			 String url_or_port = null;
 			 if(_op.equals(clientOPType.APPEND)){
 				 int _space3 = _line.indexOf(" ", _space2+1);
 				 if(_space3 == -1){
-					 System.out.print("error input\n");
+					 System.out.print("error 05\n");
 					 continue;
 				 }
-				 _target_url = _line.substring(_space2+1, _space3);
+				 url_or_port = _line.substring(_space2+1, _space3);
 				 _data = _line.substring(_space3+1);
 			 }
 			 else {
-				_target_url = _line.substring(_space2+1);
+				 url_or_port = _line.substring(_space2+1);
 			}
+			 {
+				 if(_op.equals(clientOPType.ADDNODE)){
+					 _data = url_or_port;
+				 }
+			 }
 			clientOperation _cop = new clientOperation
-					("127.0.0.1", 6000, _op, _target_url, _data, clientDir);
+					("127.0.0.1", 6000, _op, url_or_port, _data, clientDir);
+			_cop.start();
+			try {
+				_cop.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		 }
 	 }
 	 
@@ -557,6 +673,10 @@ public class client {
 		 else
 		 if(_op.equals("add")){
 			 return clientOPType.ADD;
+		 }
+		 else
+		 if(_op.equals("addnode")){
+			 return clientOPType.ADDNODE;
 		 }
 		 else
 		 if(_op.equals("delete")){

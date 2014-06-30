@@ -14,6 +14,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.jar.Attributes.Name;
 
 import namespaceServer.model.NamespaceServer;
 
@@ -40,13 +41,21 @@ public class DataOperationsThread extends Thread {
 				while(true){  
 		            String str;  
 		            try {  
+		            	{
+		            		NamespaceServer.log("new data request");
+		            	}
 		                str = br.readLine();  
+		                {
+		                	NamespaceServer.log("readline:"+str);
+		                	
+		                }
 		                if(str.equals("END")||str==null){  
 		                    br.close();  
 		                    pw.close();  
 		                    socket.close();  
 		                    break;  
 		                }  
+		                
 		                //根据该请求处理
 //		                System.out.println("Client Socket Message:"+str);  
 		                else if(str.equals("Add")){
@@ -163,6 +172,9 @@ public class DataOperationsThread extends Thread {
 		                else if(str.equals("Append")){
 		                	String path = br.readLine();
 		                	String fileName = br.readLine();
+		                	{
+		                		NamespaceServer.log("append:"+path+"/"+fileName);
+		                	}
 		                	int blockSize = Integer.parseInt(br.readLine());
 		                	HashMap<UUID,ArrayList<Integer>> blocksAndPorts = NamespaceServer.getNamespaceServer().append(path, fileName, blockSize);
 		                	if(blocksAndPorts!=null){
@@ -181,17 +193,30 @@ public class DataOperationsThread extends Thread {
 		                	else
 		                		pw.println(false);
 		                }
-		                else{}
+		                else if(str.equals("AddNode")){
+		                	String s_port = br.readLine();
+		                	int _port = Integer.parseInt(s_port);
+		                	NamespaceServer.getNamespaceServer().addNode(_port);
+		                	pw.println("Node "+_port+ " is added!");
+		                }
 		                pw.println("END");  
 		                pw.flush();  
-		            } catch (Exception e) {  
+		                {
+		                	NamespaceServer.log("finish this request");
+		                }
 		                try {  
 		                    br.close();  
 		                    pw.close();  
 		                    socket.close();  
 		                } catch (IOException e1) {   
 		                    e1.printStackTrace();  
-		                }  
+		                } 
+		                break;
+		            } catch (Exception e) {  
+		            	{
+		            		NamespaceServer.log("Exception");
+		            	}
+ 
 		            }  
 		        } 
 			}

@@ -272,6 +272,7 @@ public class storage{
 	public static  storageThread heartBeat;
 	public static  String serverIP = "127.0.0.1";
 	public static  int serverPort = 6001;
+	public final static boolean debug_mode = true;
 	
 	/* java storage port rootdir */
 	public  static void main(String[] args){
@@ -280,16 +281,25 @@ public class storage{
 			mIP = "127.0.0.1";
 			mPort = Integer.parseInt(args[0]);
 			{
-				File _f = new File(args[1]);
+				File _f = new File("s"+mPort);
 				if(! _f.exists()){
 					_f.mkdir();
 				}
 			}
-			blockManager = new blockManager(args[1]);
+			blockManager = new blockManager("s"+mPort);
 		}
 		{
 			heartBeat = new storageThread(serverIP, serverPort, OPType.heartBeat, "", mPort+1);
 			heartBeat.start();
+		}
+		{
+			listen();
+		}
+	}
+	
+	public static void log(String _str){
+		if(storage.debug_mode){
+			System.out.print("log: " + _str);
 		}
 	}
 	
@@ -309,6 +319,9 @@ public class storage{
 								(new OutputStreamWriter
 										(_socket.getOutputStream())),true);  
 				String _line = _br.readLine();
+				{
+					storage.log("new request :" + _line);
+				}
 				if(_line.equals("Del")){
 					_line = _br.readLine();
 					while(! _line.equals("END")){
@@ -347,8 +360,15 @@ public class storage{
 						while(! tmp_line.equals("END")){
 							_data += tmp_line + "\n";
 							tmp_line = _br.readLine();
+							storage.log(tmp_line);
 						}
 						blockManager.addBlock(block, _data);
+						_pw.println("Append successfully");
+						_pw.println("END");
+						_pw.flush();
+					}
+					{
+						storage.log("append "+block+" "+_data);
 					}
 				}
 				else if (_line.equals("Get")) {
@@ -364,6 +384,7 @@ public class storage{
 				
 		} catch (Exception e) {
 			// TODO: handle exception
+			storage.log("Exception");
 		}
 	}
 

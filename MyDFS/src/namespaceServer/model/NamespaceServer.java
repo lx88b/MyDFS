@@ -21,6 +21,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.swing.SpringLayout.Constraints;
 
+import namespaceServer.main;
 import namespaceServer.mySocket.CommandThread;
 
 public class NamespaceServer { 
@@ -30,6 +31,14 @@ public class NamespaceServer {
 	HashMap<String,StorageFileMetadata> fileMetadataList = new HashMap<String,StorageFileMetadata>();
 	//Ŀ¼
 	StorageDir root = new StorageDir("root");
+	
+	public static void log(String _str){
+		if(main.debug_mode)
+		{
+			System.out.println("log: " + _str);
+		}
+		
+	}
 	private static NamespaceServer ns;
 	public static NamespaceServer getNamespaceServer() {
 		if(ns==null)
@@ -356,7 +365,7 @@ public class NamespaceServer {
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				System.out.print("\n[node of port "+_heart_beat_port+" is lost]\n");
+				System.out.print("\n[node of port "+_node.getPort()+" is lost]\n");
 				lostSet.add(_heart_beat_port);
 			}
 			

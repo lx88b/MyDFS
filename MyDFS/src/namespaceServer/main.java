@@ -10,7 +10,7 @@ import namespaceServer.mySocket.HeartBeatThread;
 import namespaceServer.mySocket.ProcessAccessThread;
 
 public class main {
-
+	public final static boolean debug_mode = true;
 	public static void main(String[] args) {
 		
 		{
