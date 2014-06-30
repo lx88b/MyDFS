@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import namespaceServer.model.NamespaceServer;
 import namespaceServer.mySocket.DataOperationsThread;
+import namespaceServer.mySocket.HeartBeatThread;
 import namespaceServer.mySocket.ProcessAccessThread;
 
 public class main {
@@ -15,7 +16,8 @@ public class main {
 		{
 			DataOperationsThread _dpt = new DataOperationsThread();
 			_dpt.start();
-			
+			HeartBeatThread _hbt = new HeartBeatThread();
+			_hbt.start();
 		}
 /*		Thread dataOperationThread = new DataOperationsThread();
 		Thread nodeOperationThread = new ProcessAccessThread();
