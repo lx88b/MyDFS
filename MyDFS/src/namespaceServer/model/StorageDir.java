@@ -111,8 +111,11 @@ public class StorageDir {
 	public HashMap<String,ArrayList<String>> list(ArrayList<String> paths, String dirN) {
 		if(paths.size()==0) {
 			StorageDir dir = this.dirList.get(dirN);
-			if(dir==null)
+			//不是查找根目录
+			if(dir==null&&(!dirN.equals("root")))
 				return null;
+			if(dir==null&&(this.dirName.equals("root")))
+				dir=this;
 			HashMap<String,ArrayList<String>> temp = new HashMap<String,ArrayList<String>>();
 			ArrayList<String> files = new ArrayList<String>(dir.fileList);
 			temp.put("file", files);

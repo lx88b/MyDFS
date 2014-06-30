@@ -13,12 +13,12 @@ public class main {
 	public final static boolean debug_mode = true;
 	public static void main(String[] args) {
 		
-		{
+/*		{
 			DataOperationsThread _dpt = new DataOperationsThread();
 			_dpt.start();
 			HeartBeatThread _hbt = new HeartBeatThread();
 			_hbt.start();
-		}
+		}*/
 /*		Thread dataOperationThread = new DataOperationsThread();
 		Thread nodeOperationThread = new ProcessAccessThread();
 		try {
@@ -28,7 +28,7 @@ public class main {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-//
+*///
 		NamespaceServer ns = NamespaceServer.getNamespaceServer();
 		ns.test();
 		boolean mk;
@@ -45,6 +45,8 @@ public class main {
 		System.out.println("append1 "+append);
 		append = ns.append("/root/test3/", "test4", 10);
 		System.out.println("append2 "+append);
+		HashMap<String,ArrayList<String>> list2 = ns.list("", "root");
+		System.out.println("list2 "+list2);
 		HashMap<UUID,ArrayList<Integer>> tempget = ns.getFile("/root/test3/", "test3");
 		System.out.println("get "+tempget);
 		HashMap<Integer,ArrayList<UUID>> tempdelf = ns.deleteFile("/root/test3/", "test3");
@@ -70,7 +72,7 @@ public class main {
 		mk=ns.mkdir("/root/", "test4");
 		list = ns.list("/root/", "test4");
 		System.out.println("list2 "+list);
-*/
+
 	}
 
 }
