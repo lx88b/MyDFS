@@ -169,7 +169,7 @@ public class NamespaceServer {
 	}
 	private void myDelDir(String path, String dir,HashMap<Integer,ArrayList<UUID>> deleteNodeAndBlocks) {
 		ArrayList<String> paths = this.getPathsByString(path);
-		if(paths.isEmpty()&&dir.equals("root"))
+		if(dir.equals("root"))
 			return;
 		//获得要被删除的目录对象
 //		StorageDir deletedDir = root.getDir(paths, dir);
