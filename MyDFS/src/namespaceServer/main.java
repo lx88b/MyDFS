@@ -37,6 +37,8 @@ public class main {
 		mk=ns.mkdir("/root/", "test");
 		mk=ns.mkdir("/root/", "test2");
 		mk=ns.mkdir("/root/", "test3");
+		mk=ns.mkdir("/root/", "test10");
+		System.out.println("mk "+mk);
 		ns.addFile("/root/test/", "test");
 		ns.append("/root/test/", "test", 10);
 		ns.addFile("/root/test2/", "test2");
@@ -79,6 +81,7 @@ public class main {
 		System.out.println("size3 "+size);
 		size = ns.sizeFile("/root/", "test4");
 		System.out.println("size4 "+size);
+		System.out.println("listtest "+ns.delDir("root/test11", "test10"));
 		HashMap<Integer,ArrayList<UUID>> tempdeld = ns.delDir("/root/", "test3");
 		System.out.println("deld1 "+tempdeld.toString());
 		HashMap<Integer,ArrayList<UUID>> tempdeld2 = ns.delDir("/root/", "test2");
@@ -91,7 +94,7 @@ public class main {
 		list = ns.list("/root/", "root");
 		System.out.println("list3 "+list);
 		tempdeld2 = ns.delDir("/root/", "root");
-		System.out.println("deld3 "+tempdeld2.toString());
+		System.out.println("deld3 "+tempdeld2);
 
 	}
 

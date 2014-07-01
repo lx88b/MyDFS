@@ -9,23 +9,16 @@ import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.security.KeyStore.Entry;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeoutException;
-
-import javax.swing.SpringLayout.Constraints;
-
-import Storage.storage;
 
 import namespaceServer.main;
 import namespaceServer.mySocket.CommandThread;
+import Storage.storage;
 
 public class NamespaceServer { 
 	//节点端口：节点对象
@@ -164,17 +157,20 @@ public class NamespaceServer {
 
 	public synchronized HashMap<Integer,ArrayList<UUID>> delDir(String path, String dir) {
 		HashMap<Integer,ArrayList<UUID>> deleteNodeAndBlocks = new HashMap<Integer,ArrayList<UUID>>();
-		myDelDir(path,dir,deleteNodeAndBlocks);
+		if(!myDelDir(path,dir,deleteNodeAndBlocks))
+			return null;
 		return deleteNodeAndBlocks;
 	}
-	private void myDelDir(String path, String dir,HashMap<Integer,ArrayList<UUID>> deleteNodeAndBlocks) {
+	private boolean myDelDir(String path, String dir,HashMap<Integer,ArrayList<UUID>> deleteNodeAndBlocks) {
 		ArrayList<String> paths = this.getPathsByString(path);
 		if(dir.equals("root"))
-			return;
+			return false;
 		//获得要被删除的目录对象
 //		StorageDir deletedDir = root.getDir(paths, dir);
 		//获得目录中的所有内容
 		HashMap<String,ArrayList<String>> allContent = root.list(paths, dir);
+		if(allContent==null)
+			return false;
 		//获得当前目录的路径
 		path = path+dir+"/";
 		//获得当前目录的所有文件
@@ -207,6 +203,7 @@ public class NamespaceServer {
 		}
 		//删除该目录
 		root.deleteDir(paths, dir);
+		return true;
 	}
 
 	public HashMap<String,ArrayList<String>> list(String path, String dir) {

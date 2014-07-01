@@ -14,7 +14,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.jar.Attributes.Name;
 
 import namespaceServer.model.NamespaceServer;
 
@@ -130,7 +129,7 @@ public class DataOperationsThread extends Thread {
 		                	HashMap<Integer,ArrayList<UUID>> portsAndBlocks = NamespaceServer.getNamespaceServer().delDir(path, dir);
 		                	if(portsAndBlocks==null) {
 		                		pw.println(false);
-		                		pw.println("file or dir is not exists");
+		                		pw.println("dir is not exists");
 		                	}
 		                	else {
 		                		SocketServer.getSocketServer().deleteRequest(portsAndBlocks);
