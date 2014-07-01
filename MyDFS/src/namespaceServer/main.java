@@ -12,7 +12,7 @@ import namespaceServer.mySocket.ProcessAccessThread;
 public class main {
 	public final static boolean debug_mode = true;
 	public static void main(String[] args) {
-/*
+///*
 		{
 			DataOperationsThread _dpt = new DataOperationsThread();
 			_dpt.start();
@@ -30,7 +30,8 @@ public class main {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-*/
+//*/
+		/*
 		NamespaceServer ns = NamespaceServer.getNamespaceServer();
 		ns.test();
 		boolean mk;
@@ -95,7 +96,7 @@ public class main {
 		System.out.println("list3 "+list);
 		tempdeld2 = ns.delDir("/root/", "root");
 		System.out.println("deld3 "+tempdeld2);
-
+//*/
 	}
 
 }
