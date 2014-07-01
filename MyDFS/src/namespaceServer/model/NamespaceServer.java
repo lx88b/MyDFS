@@ -341,6 +341,13 @@ public class NamespaceServer {
 				final HashMap<UUID, StorageFileBlockMetadata> blocks
 					= _first_node.getBlocks();
 				transerBlocks(_first_node, _new_node, blocks);
+				HashMap<UUID, StorageFileBlockMetadata> new_blocks = _new_node.getBlocks();
+				//移动块数据
+				new_blocks.putAll(blocks);
+				//更新块分布
+				for(UUID uid : new_blocks.keySet()){
+					new_blocks.get(uid).addNodePort(nodePort);
+				}
 			}
 		}
 	}
