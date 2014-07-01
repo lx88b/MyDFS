@@ -12,13 +12,15 @@ import namespaceServer.mySocket.ProcessAccessThread;
 public class main {
 	public final static boolean debug_mode = true;
 	public static void main(String[] args) {
-		
-/*		{
+
+		{
 			DataOperationsThread _dpt = new DataOperationsThread();
 			_dpt.start();
 			HeartBeatThread _hbt = new HeartBeatThread();
 			_hbt.start();
-		}*/
+			ProcessAccessThread _pat = new ProcessAccessThread();
+			_pat.start();
+		}
 /*		Thread dataOperationThread = new DataOperationsThread();
 		Thread nodeOperationThread = new ProcessAccessThread();
 		try {
@@ -28,7 +30,7 @@ public class main {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-*///
+
 		NamespaceServer ns = NamespaceServer.getNamespaceServer();
 		ns.test();
 		boolean mk;
@@ -72,7 +74,7 @@ public class main {
 		mk=ns.mkdir("/root/", "test4");
 		list = ns.list("/root/", "test4");
 		System.out.println("list2 "+list);
-
+*/
 	}
 
 }

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.KeyStore.Entry;
@@ -20,6 +21,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 import javax.swing.SpringLayout.Constraints;
+
+import Storage.storage;
 
 import namespaceServer.main;
 import namespaceServer.mySocket.CommandThread;
@@ -314,6 +317,13 @@ public class NamespaceServer {
 	}
 	
 	public synchronized void addNode(int nodePort) {
+		StorageNode _first_node = null;
+		if(nodeList.size() == 1){
+			for(Integer iI:nodeList.keySet()){
+				_first_node = nodeList.get(iI);
+				break;//in fact, break here make no difference
+			}
+		}
 		//add the nodes first
 		StorageNode _new_node = null;
 		{
@@ -321,14 +331,13 @@ public class NamespaceServer {
 			_new_node.setPort(nodePort);
 			nodeList.put(nodePort, _new_node);
 		}
+		{
+			storage.log("node number:"+nodeList.size());
+		}
 		//第一个节点 以及 节点存在的情况
 		//判断是不是第二个节点
 		{
 			if(nodeList.size() == 2){
-				StorageNode _first_node = null;
-				for(Integer iI:nodeList.keySet()){
-					_first_node = nodeList.get(iI);
-				}
 				final HashMap<UUID, StorageFileBlockMetadata> blocks
 					= _first_node.getBlocks();
 				transerBlocks(_first_node, _new_node, blocks);
@@ -357,16 +366,21 @@ public class NamespaceServer {
 				_pw.flush();
 				_line = _br.readLine();
 				if(_line == null){
-					lostSet.add(_heart_beat_port);
+					lostSet.add(_node.getPort());
 				}
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} catch (IOException e) {
+			} catch (ConnectException e) {
+				// TODO: handle exception
+				lostSet.add(_node.getPort());
+				System.out.print("\n[node of port "+_node.getPort()+" is lost]\n");
+			} 
+			catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				System.out.print("\n[node of port "+_node.getPort()+" is lost]\n");
-				lostSet.add(_heart_beat_port);
+				lostSet.add(_node.getPort());
 			}
 			
 		}
@@ -397,12 +411,13 @@ public class NamespaceServer {
 				"SEND",
 
 				_block.toString());
-		CommandThread _ct_recv = new CommandThread(_to_port, _from_port,
-				"RECV",
-
-				_block.toString());
 		_ct_send.start();
-		_ct_recv.start();
+		try {
+			_ct_send.join();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public void test() {

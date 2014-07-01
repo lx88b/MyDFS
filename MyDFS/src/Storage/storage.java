@@ -142,6 +142,14 @@ class storageThread extends Thread{
 		Socket _socket = null;
 	    try {
 			_socket = new Socket(target_IP, target_port);
+			String _block = data;
+			String _msg = storage.blockManager.getBlockData(_block);
+			_msg="BLOCK\n"+_block+"\n"+_msg;
+			{
+				storage.log("sendmsg:"+_msg);
+			}
+			send(_socket, _msg);
+			_socket.close();
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -149,15 +157,19 @@ class storageThread extends Thread{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	    String _block = data;
-	    String _msg = storage.blockManager.getBlockData(_block);
-	    send(_socket, _msg);
 	}
 	
 	public void recvBlock(){
 		Socket _socket = null;
 	    try {
 			_socket = new Socket(target_IP, target_port);
+			String _block = data;
+			String _msg = recv(_socket);
+			{
+				storage.log("recv block:"+_block+" with "+_msg);
+			}
+			storage.blockManager.addBlock(_block, _msg);
+			_socket.close();
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -165,9 +177,6 @@ class storageThread extends Thread{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	    String _block = data;
-	    String _msg = recv(_socket);
-	    storage.blockManager.addBlock(_block, _msg);
 	}
 	
 	public void heartBeat(){
@@ -226,7 +235,7 @@ class storageThread extends Thread{
 				_pw.flush();
 			}
 			_pw.println("END");
-			_pw.close();
+			_pw.flush();
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -254,7 +263,6 @@ class storageThread extends Thread{
 					_ret += "\n"+_line;
 				}
 			}
-			_br.close();
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -289,6 +297,7 @@ public class storage{
 			blockManager = new blockManager("s"+mPort);
 		}
 		{
+			nodeRegister();
 			heartBeat = new storageThread(serverIP, serverPort, OPType.heartBeat, "", mPort+1);
 			heartBeat.start();
 		}
@@ -297,9 +306,41 @@ public class storage{
 		}
 	}
 	
+	public static void nodeRegister(){
+		Socket _socket = null;
+		BufferedReader _br = null;  
+	    PrintWriter _pw = null;
+	    
+		try {
+			_socket = new Socket(serverIP, serverPort);
+			_br = new BufferedReader(new InputStreamReader(_socket.getInputStream()));
+			_pw = new PrintWriter
+					(new BufferedWriter
+							(new OutputStreamWriter
+									(_socket.getOutputStream())),true);  
+			_pw.println("AddNode\n"+mPort);
+			_pw.flush();
+			String _line = _br.readLine();
+			System.out.print(_line+"\n");
+			
+			_pw.close();
+			_br.close();
+			_socket.close();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			storage.log("register IOException:"+mPort);
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
 	public static void log(String _str){
 		if(storage.debug_mode){
-			System.out.print("log: " + _str);
+			System.out.println("log: " + _str);
 		}
 	}
 	
@@ -335,22 +376,47 @@ public class storage{
 				else if(_line.equals("SEND")){
 					int _port = Integer.parseInt(_br.readLine());
 					String block = _br.readLine();
+					{
+						storage.log("send block["+block+"] to "+ _port);
+					}
 					_br.close();
 					_pw.close();
 					_socket.close();
 					storageThread _st = new storageThread("", _port, OPType.sendBlock, block, -1);
 					_st.start();
 					_st.join();
+					{
+						storage.log("finish send");
+					}
 				}
-				else if(_line.equals("RECV")){
-					int _port = Integer.parseInt(_br.readLine());
+				else if(_line.equals("BLOCK")){
 					String block = _br.readLine();
+					{
+						storage.log("block:"+block);
+					}
+					String _data = "";
+					{
+						String tmp_line=_br.readLine();
+						storage.log("line:"+tmp_line);
+						while(! tmp_line.equals("END")){
+							_data += tmp_line + "\n";
+							tmp_line = _br.readLine();
+							storage.log("line"+tmp_line);
+						}
+						blockManager.addBlock(block, _data);
+						_pw.println("transfer successfully");
+						_pw.println("END");
+						_pw.flush();
+					}
 					_br.close();
 					_pw.close();
 					_socket.close();
-					storageThread _st = new storageThread("", _port, OPType.recvBlock, block, -1);
-					_st.start();
-					_st.join();
+					{
+						storage.log("recv block["+block+"]");
+					}
+					{
+						storage.log("finish recv");
+					}
 				}
 				else if(_line.equals("Append")){
 					String block = _br.readLine();
@@ -376,6 +442,7 @@ public class storage{
 					String _data = blockManager.getBlockData(block);
 					_pw.println(_data);
 					_pw.println("END");
+					_pw.flush();
 					}
 					_br.close();
 					_pw.close();

@@ -12,6 +12,8 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import namespaceServer.model.NamespaceServer;
+
 public class ProcessAccessThread extends Thread {
 	private ServerSocket s = null;
 	private Socket socket = null;
@@ -19,11 +21,6 @@ public class ProcessAccessThread extends Thread {
     private PrintWriter pw = null;
     
 	public ProcessAccessThread(){
-		try{
-			start();
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
 	}
 	
 	public void run() {
@@ -47,19 +44,19 @@ public class ProcessAccessThread extends Thread {
 						//根据该请求处理
 						//                System.out.println("Client Socket Message:"+str);  
 						else if(str.equals("AddNode")){
-							this.addNode();
+							String _s_port = br.readLine();
+							int _port = Integer.parseInt(_s_port);
+							this.addNode(_port);
+							pw.println(_port+" register successfully");
 						}
 						else{}
 						pw.println("Message Received");  
 						pw.flush();  
+						br.close();  
+						pw.close();  
+						socket.close();  
+						break;
 					} catch (Exception e) {  
-						try {  
-							br.close();  
-							pw.close();  
-							socket.close();  
-						} catch (IOException e1) {   
-							e1.printStackTrace();  
-						}  
 					}  
 				}
 			}
@@ -80,7 +77,8 @@ public class ProcessAccessThread extends Thread {
 	
 
 	
-	private void addNode() {
-		
+	private void addNode(int _port) {
+		NamespaceServer.getNamespaceServer().addNode(_port);
+		NamespaceServer.log("add port:"+_port);
 	}
 }

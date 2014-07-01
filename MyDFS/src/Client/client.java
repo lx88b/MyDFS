@@ -537,7 +537,7 @@ class clientOperation extends Thread{
 	private String getPathOfFile(String _target_file){
 		File _f = new File(_target_file);
 		if(_f.getParent()==null){
-			return "";
+			return "";//no '/'
 		}
 		{
 			client.log(_target_file + ": has path:"+_f.getParent()+"\n");
@@ -593,7 +593,6 @@ public class client {
 			 System.out.print("******Please input the request in the form as: \n");
 			 System.out.print("******get/add/exist/delete/sizeof -f file_url\n");
 			 System.out.print("******append -f file_url data\n");
-			 System.out.print("******addnode -p port\n");
 			 System.out.print("******create/delete/list -d path_url\n");
 			 String _line = _sc.nextLine();
 			 clientOPType _op = null;

@@ -10,6 +10,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
+import namespaceServer.model.NamespaceServer;
+
 public class CommandThread extends Thread{
 	private String target_IP = "127.0.0.1";
 	private int target_port;
@@ -25,6 +27,7 @@ public class CommandThread extends Thread{
 		// TODO Auto-generated constructor stub
 		target_port = node_port;
 		command = transType + "\n" +transPort+"\n"+_block;
+		NamespaceServer.log("cmd:"+command);
 	}
 	
 	public void setTransferToComm(
@@ -78,7 +81,6 @@ public class CommandThread extends Thread{
 			}
 			_pw.println("END");
 			_pw.flush();
-			_pw.close();
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -106,7 +108,6 @@ public class CommandThread extends Thread{
 					_ret += "\n"+_line;
 				}
 			}
-			_br.close();
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
