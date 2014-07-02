@@ -55,7 +55,7 @@ public class StorageDir {
 			StorageDir temp = dirList.get(dirName);
 			if(temp==null)
 				return false;
-			temp.addNewDir(paths, dir);
+			return temp.addNewDir(paths, dir);
 		}
 		return true;
 	}

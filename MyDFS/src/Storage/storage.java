@@ -370,7 +370,13 @@ public class storage{
 					}
 					while(! _line.equals("END")){
 						storage.blockManager.delBlock(_line);
-						_line = _br.readLine();						
+						{
+							storage.log("Delete block"+_line);
+						}
+						_line = _br.readLine();		
+						if(_line==null){
+							break;
+						}
 					}
 					_br.close();
 					_pw.close();

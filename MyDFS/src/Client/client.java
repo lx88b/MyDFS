@@ -537,7 +537,7 @@ class clientOperation extends Thread{
 	private String getPathOfFile(String _target_file){
 		File _f = new File(_target_file);
 		if(_f.getParent()==null){
-			return "";//no '/'
+			return "root/";
 		}
 		{
 			client.log(_target_file + ": has path:"+_f.getParent()+"\n");
@@ -568,7 +568,7 @@ public class client {
 	 public static void main(String[] args){
 		 System.out.print("client start\n");
 		 {
-			 clientDir = "client";
+			 clientDir = "clientRoot";
 			 {
 				 File _f = new File(clientDir);
 				 if(! _f.exists()){
@@ -674,8 +674,8 @@ public class client {
 			 return clientOPType.ADD;
 		 }
 		 else
-		 if(_op.equals("addnode")){
-			 return clientOPType.ADDNODE;
+		 if(_op.equals("sizeof")){
+			 return clientOPType.SIZEOF;
 		 }
 		 else
 		 if(_op.equals("delete")){
