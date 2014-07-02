@@ -280,7 +280,7 @@ public class storage{
 	public static  storageThread heartBeat;
 	public static  String serverIP = "127.0.0.1";
 	public static  int serverPort = 6001;
-	public final static boolean debug_mode = true;
+	public final static boolean debug_mode = false;
 	
 	/* java storage port rootdir */
 	public  static void main(String[] args){
@@ -365,6 +365,9 @@ public class storage{
 				}
 				if(_line.equals("Del")){
 					_line = _br.readLine();
+					{
+						System.out.println("Del block: "+ _line);
+					}
 					while(! _line.equals("END")){
 						storage.blockManager.delBlock(_line);
 						_line = _br.readLine();						
@@ -377,7 +380,7 @@ public class storage{
 					int _port = Integer.parseInt(_br.readLine());
 					String block = _br.readLine();
 					{
-						storage.log("send block["+block+"] to "+ _port);
+						System.out.println("SEND BLOCK["+block+"] to "+ _port);
 					}
 					_br.close();
 					_pw.close();
@@ -392,7 +395,7 @@ public class storage{
 				else if(_line.equals("BLOCK")){
 					String block = _br.readLine();
 					{
-						storage.log("block:"+block);
+						System.out.println("RECV block: ["+block+"]");
 					}
 					String _data = "";
 					{
@@ -404,7 +407,7 @@ public class storage{
 							storage.log("line"+tmp_line);
 						}
 						blockManager.addBlock(block, _data);
-						_pw.println("transfer successfully");
+						_pw.println("recv successfully");
 						_pw.println("END");
 						_pw.flush();
 					}
@@ -434,7 +437,7 @@ public class storage{
 						_pw.flush();
 					}
 					{
-						storage.log("append "+block+" "+_data);
+						System.out.println("append "+block+" "+_data);
 					}
 				}
 				else if (_line.equals("Get")) {

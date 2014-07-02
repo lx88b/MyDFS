@@ -79,6 +79,6 @@ public class ProcessAccessThread extends Thread {
 	
 	private void addNode(int _port) {
 		NamespaceServer.getNamespaceServer().addNode(_port);
-		NamespaceServer.log("add port:"+_port);
+		System.out.println("add node:"+_port);
 	}
 }

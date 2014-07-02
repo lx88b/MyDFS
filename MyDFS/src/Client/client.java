@@ -63,10 +63,10 @@ class clientOperation extends Thread{
 	@Override
 	public void run(){
 		{
-			System.out.print(OPtype + "--type\n");
-			System.out.print(target_port + "--port\n");
-			System.out.print(Data + "--data\n");
-			System.out.print(target_file+"--file\n");
+			client.log(OPtype + "--type\n");
+			client.log(target_port + "--port\n");
+			client.log(Data + "--data\n");
+			client.log(target_file+"--file\n");
 		}
 		switch (OPtype) {
 		case ADD:
@@ -198,7 +198,7 @@ class clientOperation extends Thread{
 				return;
 			}
 			
-			System.out.print(_msg_recv);
+			System.out.print("Add " + target_file + " successfully!\n");;
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -228,7 +228,7 @@ class clientOperation extends Thread{
 				return;
 			}
 			
-			System.out.print(_msg_recv+"\n");
+			System.out.print("Del " + target_file + " successfully!\n");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -276,7 +276,7 @@ class clientOperation extends Thread{
 			this.send(_socket2server, _msg_send);
 			_msg_recv = this.recv(_socket2server);
 			_socket2server.close();
-			System.out.print(_msg_recv+"\n");
+			System.out.print("Size of "+ target_file + " is "+_msg_recv+"\n");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -305,7 +305,7 @@ class clientOperation extends Thread{
 				return;
 			}
 			
-			System.out.print(_msg_recv+"\n");
+			System.out.print("delete " + target_file + " successfully!\n");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -337,7 +337,7 @@ class clientOperation extends Thread{
 				return;
 			}
 			
-			System.out.print("receive: ["+_msg_recv+"]\n");
+			System.out.println("Make dir "+target_file+" successfully");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -442,7 +442,7 @@ class clientOperation extends Thread{
 				}
 			}
 			{
-				System.out.println(_msg_recv);
+				System.out.println("Append " + target_file + " successfully!");
 			}
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -557,7 +557,7 @@ public class client {
 	public  String serverIP = "127.0.0.1";
 	public  int serverPort = 6000;
 	public static String clientDir;
-	public final static boolean debug_mode = true;
+	public final static boolean debug_mode = false;
 	public static void log(String _str){
 		if(debug_mode)
 		{
@@ -590,7 +590,7 @@ public class client {
 			 opSet.add("addnode");
 		 }
 		 while(true){
-			 System.out.print("******Please input the request in the form as: \n");
+			 System.out.print("\n\n******Please input the request in the form as: \n");
 			 System.out.print("******get/add/exist/delete/sizeof -f file_url\n");
 			 System.out.print("******append -f file_url data\n");
 			 System.out.print("******create/delete/list -d path_url\n");

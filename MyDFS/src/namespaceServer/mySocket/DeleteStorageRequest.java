@@ -28,7 +28,6 @@ public class DeleteStorageRequest extends Thread {
 		try {  
 			//客户端socket指定服务器的地址和端口号,这里要获取需要通信的端口  
 			socket = new Socket("127.0.0.1", port);  
-			System.out.println("Socket=" + socket);  
 			//同服务器原理一样  
 			br = new BufferedReader(new InputStreamReader(  
 					socket.getInputStream()));  
@@ -46,7 +45,6 @@ public class DeleteStorageRequest extends Thread {
 			e.printStackTrace();  
 		} finally {  
 			try {  
-				System.out.println("close......");  
 				br.close();  
 				pw.close();  
 				socket.close();  

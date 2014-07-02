@@ -10,7 +10,7 @@ import namespaceServer.mySocket.HeartBeatThread;
 import namespaceServer.mySocket.ProcessAccessThread;
 
 public class main {
-	public final static boolean debug_mode = true;
+	public final static boolean debug_mode = false;
 	public static void main(String[] args) {
 
 		{
@@ -20,6 +20,7 @@ public class main {
 			_hbt.start();
 			ProcessAccessThread _pat = new ProcessAccessThread();
 			_pat.start();
+			System.out.println("Namespace Server start...");
 		}
 /*		Thread dataOperationThread = new DataOperationsThread();
 		Thread nodeOperationThread = new ProcessAccessThread();
