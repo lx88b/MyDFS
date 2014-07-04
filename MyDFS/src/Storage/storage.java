@@ -9,11 +9,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.UUID;
 
 
 
@@ -139,7 +141,6 @@ class storageThread extends Thread{
 	public void sendBlock(){
 		Socket _socket = null;
 	    try {
-	    	sleep(10);
 			_socket = new Socket(target_IP, target_port);
 			String _block = data;
 			String _msg = storage.blockManager.getBlockData(_block);
@@ -153,9 +154,6 @@ class storageThread extends Thread{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -299,13 +297,12 @@ public class storage{
 			blockManager = new blockManager("s"+mPort);
 		}
 		{
-			nodeRegister();
+			Listen_Thread _lt = new Listen_Thread();
+			_lt.start();
 			heartBeat = new storageThread(serverIP, serverPort, OPType.heartBeat, "", mPort+1);
 			heartBeat.start();
 		}
-		{
-			listen();
-		}
+		nodeRegister();
 	}
 	
 	public static void nodeRegister(){
