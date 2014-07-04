@@ -12,7 +12,7 @@ public class Listen_Thread extends Thread{
 	
 	@Override
 	public void run(){
-		
+		listen();
 	}
 	
 	public void listen(){
