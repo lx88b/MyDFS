@@ -282,8 +282,6 @@ public class NamespaceServer {
 		StorageNode deletedNode = nodeList.get(nodePort);
 		//移除该节点
 		nodeList.remove(nodePort);
-		if(nodeList.size()<=1)
-			return;
 		//获得所有要移动的块
 		HashMap<UUID,StorageFileBlockMetadata> blocks = deletedNode.getBlocks();
 		{//修改元数据  问题?
@@ -292,6 +290,11 @@ public class NamespaceServer {
 				_sfbm.deleteNodePort(nodePort);
 			}
 		}
+		
+		
+		if(nodeList.size()<=1)
+			return;
+		
 		//获得所有要移动的块id
 		ArrayList<UUID> blockIDs = new ArrayList<UUID>(blocks.keySet());
 		ArrayList<StorageNode> snList = new ArrayList<StorageNode>();
@@ -310,6 +313,9 @@ public class NamespaceServer {
 					continue;
 				}
 				this.transerBlock(_from, snList.get(i), uid);
+				snList.get(i).addBlock(uid, blocks.get(uid));
+				int addPort = snList.get(i).getPort();
+				blocks.get(uid).addNodePort(addPort);
 				break;
 			}
 		}
@@ -342,7 +348,10 @@ public class NamespaceServer {
 				transerBlocks(_first_node, _new_node, blocks);
 				HashMap<UUID, StorageFileBlockMetadata> new_blocks = _new_node.getBlocks();
 				//移动块数据
-				new_blocks.putAll(blocks);
+				ArrayList<UUID> blockID = new ArrayList<UUID>(blocks.keySet());
+				for(UUID id : blockID) {
+					_new_node.addBlock(id, blocks.get(id));
+				}
 				//更新块分布
 				for(UUID uid : new_blocks.keySet()){
 					new_blocks.get(uid).addNodePort(nodePort);
@@ -418,12 +427,7 @@ public class NamespaceServer {
 
 				_block.toString());
 		_ct_send.start();
-		try {
-			_ct_send.join();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
 	}
 	
 	public void test() {
