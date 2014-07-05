@@ -349,10 +349,14 @@ class clientOperation extends Thread{
 	
 	public void List(){
 		String _path = this.getPathOfFile(target_file);
+		if(target_file.equals("."))
+			_path = "root/";
 		/*
 		 * What if _path is null ???
 		 */
 		String _name = this.getFileName(target_file);
+		if(target_file.equals("."))
+			_name = this.getFileName("root");
 		String _msg_send = "List\n"+_path+"\n"+_name;
 		String _msg_recv = null;
 		Socket _socket2server = null;
@@ -542,7 +546,7 @@ class clientOperation extends Thread{
 		{
 			client.log(_target_file + ": has path:"+_f.getParent()+"\n");
 		}
-		return _f.getParent()+"/";
+		return "root/"+_f.getParent()+"/";
 	}
 	
 }

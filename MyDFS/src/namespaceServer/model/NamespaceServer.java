@@ -336,9 +336,6 @@ public class NamespaceServer {
 			_new_node.setPort(nodePort);
 			nodeList.put(nodePort, _new_node);
 		}
-		{
-			storage.log("node number:"+nodeList.size());
-		}
 		//第一个节点 以及 节点存在的情况
 		//判断是不是第二个节点
 		{
