@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +19,6 @@ import java.util.UUID;
 
 import namespaceServer.main;
 import namespaceServer.mySocket.CommandThread;
-import Storage.storage;
 
 public class NamespaceServer { 
 	//节点端口：节点对象
@@ -387,7 +387,10 @@ public class NamespaceServer {
 				// TODO: handle exception
 				lostSet.add(_node.getPort());
 				System.out.print("\n[node of port "+_node.getPort()+" is lost]\n");
-			} 
+			} catch (SocketTimeoutException e) {
+				System.out.print("\n[node of port "+_node.getPort()+" is lost]\n");
+				lostSet.add(_node.getPort());
+			}
 			catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
